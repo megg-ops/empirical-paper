@@ -33,23 +33,17 @@ except ImportError:
     logger.error("python-docx is required. Install with: pip install python-docx")
     sys.exit(2)
 
+# 确保 docx_gen 模块可导入（scripts/ 目录）
+_scripts_dir = Path(__file__).resolve().parent
+if str(_scripts_dir) not in sys.path:
+    sys.path.insert(0, str(_scripts_dir))
+
+from docx_gen.defaults import FALLBACK_DEFAULTS, PT_TO_CHINESE, CHINESE_TO_PT
+
 
 # ---------------------------------------------------------------------------
-# Font size mapping (Chinese standard)
+# Font size mapping (Chinese standard) — see docx_gen.defaults for definitions
 # ---------------------------------------------------------------------------
-
-PT_TO_CHINESE = {
-    42: "初号", 36: "小初",
-    26: "一号", 24: "小一",
-    22: "二号", 18: "小二",
-    16: "三号", 15: "小三",
-    14: "四号", 12: "小四",
-    10.5: "五号", 9: "小五",
-    7.5: "六号", 6.5: "小六",
-    5.5: "七号", 5: "八号",
-}
-
-CHINESE_TO_PT = {v: k for k, v in PT_TO_CHINESE.items()}
 
 
 def _pt_to_chinese(pt_val):
@@ -411,96 +405,7 @@ def _parse_format_description(desc: str) -> dict | None:
 # Merge: explicit text rules > style properties > fallback defaults
 # ---------------------------------------------------------------------------
 
-FALLBACK_DEFAULTS = {
-    "title": {
-        "font_name": "Times New Roman",
-        "font_name_east_asia": "黑体",
-        "font_size_pt": 16,
-        "font_size_chinese": "三号",
-        "bold": True,
-        "alignment": "居中",
-    },
-    "heading1": {
-        "font_name": "Times New Roman",
-        "font_name_east_asia": "楷体",
-        "font_size_pt": 14,
-        "font_size_chinese": "四号",
-        "bold": False,
-        "alignment": "居中",
-    },
-    "heading2": {
-        "font_name": "Times New Roman",
-        "font_name_east_asia": "宋体",
-        "font_size_pt": 14,
-        "font_size_chinese": "四号",
-        "bold": True,
-        "alignment": "左对齐",
-    },
-    "heading3": {
-        "font_name": "Times New Roman",
-        "font_name_east_asia": "宋体",
-        "font_size_pt": 10.5,
-        "font_size_chinese": "五号",
-        "bold": True,
-        "alignment": "左对齐",
-    },
-    "body": {
-        "font_name": "Times New Roman",
-        "font_name_east_asia": "宋体",
-        "font_size_pt": 10.5,
-        "font_size_chinese": "五号",
-        "bold": False,
-        "alignment": "两端对齐",
-        "first_line_indent_chars": 2,
-        "line_spacing": "1.1",
-    },
-    "abstract": {
-        "font_name": "Times New Roman",
-        "font_name_east_asia": "宋体",
-        "font_size_pt": 10.5,
-        "font_size_chinese": "五号",
-        "bold": False,
-        "alignment": "两端对齐",
-    },
-    "keywords": {
-        "font_name": "Times New Roman",
-        "font_name_east_asia": "宋体",
-        "font_size_pt": 10.5,
-        "font_size_chinese": "五号",
-        "bold": False,
-    },
-    "table_caption": {
-        "font_name": "Times New Roman",
-        "font_name_east_asia": "宋体",
-        "font_size_pt": 10.5,
-        "font_size_chinese": "五号",
-        "bold": False,
-        "alignment": "居中",
-    },
-    "figure_caption": {
-        "font_name": "Times New Roman",
-        "font_name_east_asia": "宋体",
-        "font_size_pt": 10.5,
-        "font_size_chinese": "五号",
-        "bold": False,
-        "alignment": "居中",
-    },
-    "table": {
-        "font_name": "Times New Roman",
-        "font_name_east_asia": "宋体",
-        "font_size_pt": 10.5,
-        "font_size_chinese": "五号",
-        "table_style": "three_line",
-    },
-    "references": {
-        "font_name": "Times New Roman",
-        "font_name_east_asia": "宋体",
-        "font_size_pt": 10.5,
-        "font_size_chinese": "五号",
-        "bold": False,
-        "alignment": "两端对齐",
-    },
-}
+# FALLBACK_DEFAULTS imported from docx_gen.defaults
 
 
 def merge_rules(style_props: dict, text_rules: dict) -> dict:
