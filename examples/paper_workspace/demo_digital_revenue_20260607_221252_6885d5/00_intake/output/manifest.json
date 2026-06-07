@@ -1,0 +1,21 @@
+{
+  "run_id": "demo_digital_revenue_20260607_221252_6885d5",
+  "workspace_root": "paper_workspace/demo_digital_revenue_20260607_221252_6885d5",
+  "project_title": "企业数字化能力与营业收入增长的相关性分析",
+  "created_at": "2026-06-07T22:12:52",
+  "output_format": "docx",
+  "status": "running",
+  "materials": {
+    "framework": {
+      "file": "demo_case/framework.md",
+      "workspace_copy": "00_intake/output/framework.md"
+    },
+    "data": {
+      "file": "demo_case/data.xlsx",
+      "sheets": ["data", "variable_dictionary"]
+    },
+    "latex_template": null,
+    "word_template": null,
+    "references": null
+  }
+}

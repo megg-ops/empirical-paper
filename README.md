@@ -44,7 +44,7 @@ Stage 2 和 Stage 4 设置了 Blocking Gate，通过 `AskUserQuestion` 强制等
 
 ## 示例输出
 
-![论文最终效果](demo.png)
+![论文最终效果](demo_case.png)
 
 ## 快速开始
 
@@ -227,7 +227,7 @@ empirical-paper/
 ├── SKILL.md                           # 主协调者
 ├── README.md
 ├── pyproject.toml                     # 项目元数据、依赖、pytest 配置
-├── demo.png                           # 示例输出截图
+├── demo_case.png                      # 示例输出截图
 ├── agents/                            # 6 个 Agent 定义
 ├── scripts/
 │   ├── utils.py                       # 共享工具函数

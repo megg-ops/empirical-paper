@@ -1,0 +1,574 @@
+{
+  "meta": {
+    "method": "OLS with HC1 robust standard errors + industry/region dummies",
+    "sample_size": 180,
+    "notes": [
+      "Cross-section data, 180 SMEs",
+      "Correlation analysis only, no causal claims",
+      "Industry benchmark: Manufacturing; Region benchmark: Eastern"
+    ]
+  },
+  "reportable_values": [
+    {
+      "key": "descriptive.revenue_growth_pct.mean",
+      "label": "营业收入增长率(%)均值",
+      "value_raw": 5.723944444444444,
+      "value_display": "5.724",
+      "precision": 3,
+      "allowed_text_forms": [
+        "5.724",
+        "5.72",
+        "5.7"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": true
+    },
+    {
+      "key": "descriptive.revenue_growth_pct.std",
+      "label": "营业收入增长率(%)标准差",
+      "value_raw": 4.882594842819847,
+      "value_display": "4.883",
+      "precision": 3,
+      "allowed_text_forms": [
+        "4.883",
+        "4.88"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": false
+    },
+    {
+      "key": "descriptive.digital_score.mean",
+      "label": "数字化能力指数均值",
+      "value_raw": 49.03888888888889,
+      "value_display": "49.039",
+      "precision": 3,
+      "allowed_text_forms": [
+        "49.039",
+        "49.04",
+        "49.0"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": true
+    },
+    {
+      "key": "descriptive.digital_score.std",
+      "label": "数字化能力指数标准差",
+      "value_raw": 10.251362568591798,
+      "value_display": "10.251",
+      "precision": 3,
+      "allowed_text_forms": [
+        "10.251",
+        "10.25"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": false
+    },
+    {
+      "key": "descriptive.firm_age_years.mean",
+      "label": "企业成立年限均值",
+      "value_raw": 5.427777777777778,
+      "value_display": "5.428",
+      "precision": 3,
+      "allowed_text_forms": [
+        "5.428",
+        "5.43",
+        "5.4"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": true
+    },
+    {
+      "key": "descriptive.firm_age_years.std",
+      "label": "企业成立年限标准差",
+      "value_raw": 3.0508366020958535,
+      "value_display": "3.051",
+      "precision": 3,
+      "allowed_text_forms": [
+        "3.051",
+        "3.05"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": false
+    },
+    {
+      "key": "descriptive.employees.mean",
+      "label": "员工人数均值",
+      "value_raw": 108.16111111111111,
+      "value_display": "108.161",
+      "precision": 3,
+      "allowed_text_forms": [
+        "108.161",
+        "108.16",
+        "108.2"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": true
+    },
+    {
+      "key": "descriptive.employees.std",
+      "label": "员工人数标准差",
+      "value_raw": 59.6678107627273,
+      "value_display": "59.668",
+      "precision": 3,
+      "allowed_text_forms": [
+        "59.668",
+        "59.67"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": false
+    },
+    {
+      "key": "descriptive.rd_intensity_pct.mean",
+      "label": "研发投入强度(%)均值",
+      "value_raw": 5.272722222222222,
+      "value_display": "5.273",
+      "precision": 3,
+      "allowed_text_forms": [
+        "5.273",
+        "5.27",
+        "5.3"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": true
+    },
+    {
+      "key": "descriptive.rd_intensity_pct.std",
+      "label": "研发投入强度(%)标准差",
+      "value_raw": 2.068634027093942,
+      "value_display": "2.069",
+      "precision": 3,
+      "allowed_text_forms": [
+        "2.069",
+        "2.07"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": false
+    },
+    {
+      "key": "descriptive.marketing_intensity_pct.mean",
+      "label": "营销投入强度(%)均值",
+      "value_raw": 6.093333333333335,
+      "value_display": "6.093",
+      "precision": 3,
+      "allowed_text_forms": [
+        "6.093",
+        "6.09",
+        "6.1"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": true
+    },
+    {
+      "key": "descriptive.marketing_intensity_pct.std",
+      "label": "营销投入强度(%)标准差",
+      "value_raw": 2.077160180007267,
+      "value_display": "2.077",
+      "precision": 3,
+      "allowed_text_forms": [
+        "2.077",
+        "2.08"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": false
+    },
+    {
+      "key": "descriptive.manager_edu_years.mean",
+      "label": "管理者受教育年限均值",
+      "value_raw": 14.85,
+      "value_display": "14.850",
+      "precision": 3,
+      "allowed_text_forms": [
+        "14.850",
+        "14.85",
+        "14.8"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": true
+    },
+    {
+      "key": "descriptive.manager_edu_years.std",
+      "label": "管理者受教育年限标准差",
+      "value_raw": 2.4207552263543266,
+      "value_display": "2.421",
+      "precision": 3,
+      "allowed_text_forms": [
+        "2.421",
+        "2.42"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": false
+    },
+    {
+      "key": "descriptive.export_dummy.mean",
+      "label": "是否出口均值",
+      "value_raw": 0.24444444444444444,
+      "value_display": "0.244",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.244",
+        "0.24",
+        "0.2"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": true
+    },
+    {
+      "key": "descriptive.export_dummy.std",
+      "label": "是否出口标准差",
+      "value_raw": 0.43095609210326596,
+      "value_display": "0.431",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.431",
+        "0.43"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": false
+    },
+    {
+      "key": "descriptive.financing_constraint.mean",
+      "label": "融资约束程度均值",
+      "value_raw": 2.8333333333333335,
+      "value_display": "2.833",
+      "precision": 3,
+      "allowed_text_forms": [
+        "2.833",
+        "2.83",
+        "2.8"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": true
+    },
+    {
+      "key": "descriptive.financing_constraint.std",
+      "label": "融资约束程度标准差",
+      "value_raw": 1.1457963004003693,
+      "value_display": "1.146",
+      "precision": 3,
+      "allowed_text_forms": [
+        "1.146",
+        "1.15"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": false
+    },
+    {
+      "key": "descriptive.labor_productivity.mean",
+      "label": "人均产出指数均值",
+      "value_raw": 50.290166666666664,
+      "value_display": "50.290",
+      "precision": 3,
+      "allowed_text_forms": [
+        "50.290",
+        "50.29",
+        "50.3"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": true
+    },
+    {
+      "key": "descriptive.labor_productivity.std",
+      "label": "人均产出指数标准差",
+      "value_raw": 7.93165713380679,
+      "value_display": "7.932",
+      "precision": 3,
+      "allowed_text_forms": [
+        "7.932",
+        "7.93"
+      ],
+      "source": "tab_01_desc_stats",
+      "must_report": false
+    },
+    {
+      "key": "main.digital_score.coef",
+      "label": "数字化能力指数回归系数（模型3）",
+      "value_raw": 0.1320566534239759,
+      "value_display": "0.132",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.132",
+        "0.13"
+      ],
+      "source": "tab_03_baseline_model3",
+      "must_report": true
+    },
+    {
+      "key": "main.digital_score.se",
+      "label": "数字化能力指数标准误（模型3）",
+      "value_raw": 0.035238478903560515,
+      "value_display": "0.035",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.035"
+      ],
+      "source": "tab_03_baseline_model3",
+      "must_report": true
+    },
+    {
+      "key": "main.digital_score.p",
+      "label": "数字化能力指数p值（模型3）",
+      "value_raw": 0.00017859667144593056,
+      "value_display": "0.000",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.000"
+      ],
+      "source": "tab_03_baseline_model3",
+      "must_report": true
+    },
+    {
+      "key": "main.r2",
+      "label": "模型3 R²",
+      "value_raw": 0.33749597439069734,
+      "value_display": "0.337",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.337",
+        "0.34"
+      ],
+      "source": "tab_03_baseline_model3",
+      "must_report": true
+    },
+    {
+      "key": "main.adj_r2",
+      "label": "模型3 调整R²",
+      "value_raw": 0.2769010939996025,
+      "value_display": "0.277",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.277"
+      ],
+      "source": "tab_03_baseline_model3",
+      "must_report": true
+    },
+    {
+      "key": "main.f_stat",
+      "label": "模型3 F统计量",
+      "value_raw": 7.107698988875016,
+      "value_display": "7.108",
+      "precision": 3,
+      "allowed_text_forms": [
+        "7.108"
+      ],
+      "source": "tab_03_baseline_model3",
+      "must_report": false
+    },
+    {
+      "key": "main.n_obs",
+      "label": "样本量",
+      "value_raw": 180,
+      "value_display": "180",
+      "precision": 0,
+      "allowed_text_forms": [
+        "180"
+      ],
+      "source": "tab_03_baseline_model3",
+      "must_report": true
+    },
+    {
+      "key": "stepwise.model1.digital_score.coef",
+      "label": "数字化能力系数（model1）",
+      "value_raw": 0.17575277159236619,
+      "value_display": "0.176",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.176"
+      ],
+      "source": "tab_03_baseline",
+      "must_report": false
+    },
+    {
+      "key": "stepwise.model1.r2",
+      "label": "R²（model1）",
+      "value_raw": 0.1361652151328131,
+      "value_display": "0.136",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.136"
+      ],
+      "source": "tab_03_baseline",
+      "must_report": false
+    },
+    {
+      "key": "stepwise.model2.digital_score.coef",
+      "label": "数字化能力系数（model2）",
+      "value_raw": 0.12520970924972158,
+      "value_display": "0.125",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.125"
+      ],
+      "source": "tab_03_baseline",
+      "must_report": false
+    },
+    {
+      "key": "stepwise.model2.r2",
+      "label": "R²（model2）",
+      "value_raw": 0.31571004553427906,
+      "value_display": "0.316",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.316"
+      ],
+      "source": "tab_03_baseline",
+      "must_report": false
+    },
+    {
+      "key": "robustness.log_employees.digital_score.coef",
+      "label": "稳健性：对数变换员工后数字化能力系数",
+      "value_raw": 0.13167856572658942,
+      "value_display": "0.132",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.132"
+      ],
+      "source": "tab_05_robustness",
+      "must_report": true
+    },
+    {
+      "key": "robustness.trimmed.digital_score.coef",
+      "label": "稳健性：剔除极端值后数字化能力系数",
+      "value_raw": 0.1320566534239759,
+      "value_display": "0.132",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.132"
+      ],
+      "source": "tab_05_robustness",
+      "must_report": true
+    },
+    {
+      "key": "heterogeneity.industry.零售业.coef",
+      "label": "行业异质性：零售业数字化能力系数",
+      "value_raw": 0.1652343688446833,
+      "value_display": "0.165",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.165"
+      ],
+      "source": "tab_04_heterogeneity",
+      "must_report": false
+    },
+    {
+      "key": "heterogeneity.industry.文创服务.coef",
+      "label": "行业异质性：文创服务数字化能力系数",
+      "value_raw": 0.18553538352859691,
+      "value_display": "0.186",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.186"
+      ],
+      "source": "tab_04_heterogeneity",
+      "must_report": false
+    },
+    {
+      "key": "heterogeneity.industry.制造业.coef",
+      "label": "行业异质性：制造业数字化能力系数",
+      "value_raw": 0.15905664791596874,
+      "value_display": "0.159",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.159"
+      ],
+      "source": "tab_04_heterogeneity",
+      "must_report": false
+    },
+    {
+      "key": "heterogeneity.industry.软件服务.coef",
+      "label": "行业异质性：软件服务数字化能力系数",
+      "value_raw": 0.07988990775102262,
+      "value_display": "0.080",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.080"
+      ],
+      "source": "tab_04_heterogeneity",
+      "must_report": false
+    },
+    {
+      "key": "heterogeneity.industry.商务服务.coef",
+      "label": "行业异质性：商务服务数字化能力系数",
+      "value_raw": 0.08571525400029616,
+      "value_display": "0.086",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.086"
+      ],
+      "source": "tab_04_heterogeneity",
+      "must_report": false
+    },
+    {
+      "key": "heterogeneity.region.东部.coef",
+      "label": "区域异质性：东部数字化能力系数",
+      "value_raw": 0.13128415403277685,
+      "value_display": "0.131",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.131"
+      ],
+      "source": "tab_04_heterogeneity",
+      "must_report": false
+    },
+    {
+      "key": "heterogeneity.region.中部.coef",
+      "label": "区域异质性：中部数字化能力系数",
+      "value_raw": 0.07078526145376125,
+      "value_display": "0.071",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.071"
+      ],
+      "source": "tab_04_heterogeneity",
+      "must_report": false
+    },
+    {
+      "key": "heterogeneity.region.东北.coef",
+      "label": "区域异质性：东北数字化能力系数",
+      "value_raw": 0.357042113803006,
+      "value_display": "0.357",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.357"
+      ],
+      "source": "tab_04_heterogeneity",
+      "must_report": false
+    },
+    {
+      "key": "heterogeneity.region.西部.coef",
+      "label": "区域异质性：西部数字化能力系数",
+      "value_raw": 0.03965294158241685,
+      "value_display": "0.040",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.040"
+      ],
+      "source": "tab_04_heterogeneity",
+      "must_report": false
+    },
+    {
+      "key": "diagnostic.vif_max",
+      "label": "VIF最大值",
+      "value_raw": 3.67,
+      "value_display": "3.670",
+      "precision": 3,
+      "allowed_text_forms": [
+        "3.670"
+      ],
+      "source": "model_diagnostics",
+      "must_report": false
+    },
+    {
+      "key": "diagnostic.bp_p",
+      "label": "Breusch-Pagan p值",
+      "value_raw": 0.38013401015626536,
+      "value_display": "0.380",
+      "precision": 3,
+      "allowed_text_forms": [
+        "0.380"
+      ],
+      "source": "model_diagnostics",
+      "must_report": false
+    }
+  ],
+  "warnings": []
+}

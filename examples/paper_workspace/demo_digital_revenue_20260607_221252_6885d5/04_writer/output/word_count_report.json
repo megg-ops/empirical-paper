@@ -1,0 +1,7 @@
+{
+  "actual_words": 5167,
+  "target_words": 8000,
+  "short_by": 2833,
+  "status": "SHORT",
+  "needs_user_decision": true
+}

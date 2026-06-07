@@ -1,0 +1,4 @@
+user_confirmed at 2026-06-07T22:20:00
+method: OLS + HC1 robust SE + industry/region dummies
+interpretation: correlation only, no causal claims
+stage2_verdict: PASS

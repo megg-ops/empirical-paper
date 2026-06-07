@@ -3,6 +3,7 @@ __pycache__/
 *.pyo
 .venv/
 paper_workspace/
+!examples/paper_workspace/
 *.egg-info/
 .pytest_cache/
 dist/

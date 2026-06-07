@@ -1,0 +1,4 @@
+user_confirmed at 2026-06-07T22:30:00
+core_findings: digital_score beta=0.132, p<0.001, R2=0.337
+robustness: stable across specifications
+diagnostics: no issues
