@@ -38,6 +38,7 @@ from docx_gen.styles import (
     superscript_numeric_citations, _ensure_style,
     _get_body_fonts, _get_title_fonts, _get_heading_fonts,
 )
+from docx_gen.defaults import FALLBACK_DEFAULTS
 from docx_gen.tables import (
     apply_three_line_tables, fix_table_formatting,
     apply_three_line_table, _get_or_create_tc_borders, _set_tc_border,
@@ -273,7 +274,9 @@ def build_docx(args: argparse.Namespace) -> int:
         body_ea, body_ascii = _get_body_fonts(template_rules)
         logger.info("template rules loaded: body fonts = %s / %s", body_ea, body_ascii)
     else:
-        body_ea, body_ascii = "宋体", "Times New Roman"
+        template_rules = {"rules": FALLBACK_DEFAULTS}
+        body_ea, body_ascii = _get_body_fonts(template_rules)
+        logger.info("no template_rules, using FALLBACK_DEFAULTS: body fonts = %s / %s", body_ea, body_ascii)
 
     # 0b2. Template rules mandatory when Word template exists
     word_template_file = manifest.get("word_template_file")
@@ -396,7 +399,7 @@ def build_docx(args: argparse.Namespace) -> int:
         post_steps["protect_math_objects"] = f"{math_count} math elements preserved"
 
         # 6b. Normalize heading styles
-        heading_count = normalize_heading_styles(doc)
+        heading_count = normalize_heading_styles(doc, template_rules)
         post_steps["normalize_heading_styles"] = f"{heading_count} headings adjusted"
 
         # 6c. Set fonts on all runs in the document body
