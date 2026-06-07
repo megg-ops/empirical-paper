@@ -17,9 +17,12 @@ stage_guard.py — Stage 入口 self-check 脚本
 
 import argparse
 import json
+import logging
 import os
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def _resolve_paper_workspace():

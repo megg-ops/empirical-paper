@@ -19,10 +19,13 @@ update_session_state.py — 更新 session_state.md
 """
 
 import argparse
+import logging
 import os
 import sys
 from pathlib import Path
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 def _resolve_paper_workspace():
@@ -144,7 +147,7 @@ def main():
     else:
         ws = _resolve_paper_workspace()
         if ws is None:
-            print("错误: 未找到 workspace 目录，请使用 --workspace 指定", file=sys.stderr)
+            logger.error("未找到 workspace 目录，请使用 --workspace 指定")
             sys.exit(1)
 
     # 构建 session_state 内容

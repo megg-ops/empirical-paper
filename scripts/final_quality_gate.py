@@ -11,12 +11,15 @@ final_quality_gate.py — 最终质量门禁脚本
     python final_quality_gate.py --help
 """
 
+import logging
 import os
 import re
 import sys
 import json
 import argparse
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 # === Severity detection ===

@@ -18,16 +18,19 @@ extract_word_template_rules.py -- 从 Word 模板中提取格式规则
 
 import argparse
 import json
+import logging
 import os
 import re
 import sys
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 try:
     from docx import Document
     from docx.oxml.ns import qn
 except ImportError:
-    print("ERROR: python-docx is required. Install with: pip install python-docx", file=sys.stderr)
+    logger.error("python-docx is required. Install with: pip install python-docx")
     sys.exit(2)
 
 
@@ -555,7 +558,7 @@ def main():
 
     template_path = Path(args.template)
     if not template_path.exists():
-        print(f"ERROR: 模板文件不存在: {args.template}", file=sys.stderr)
+        logger.error("模板文件不存在: %s", args.template)
         sys.exit(2)
 
     # 1. 打开模板

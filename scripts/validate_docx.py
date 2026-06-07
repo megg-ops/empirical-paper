@@ -18,16 +18,26 @@ Exit codes:
 """
 
 import argparse
+import logging
 import os
 import re
 import sys
 import zipfile
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 try:
     from lxml import etree
 except ImportError:
     etree = None
+
+from utils import (
+    count_md_formulas,
+    extract_md_citation_numbers,
+    _CAPTION_NUM_PATTERN,
+    _CAPTION_REF_VERB_PATTERN,
+)
 
 
 # ==================== Check A: Openability ====================
@@ -78,20 +88,6 @@ def check_openability(docx_path: str) -> dict:
 
 
 # ==================== Check B: Formula Integrity ====================
-
-def count_md_formulas(md_text: str) -> tuple[int, int]:
-    """统计 Markdown 中的行内和独立公式数"""
-    # 独立公式 $$...$$（先统计，避免被行内匹配干扰）
-    block_formulas = re.findall(r'\$\$.*?\$\$', md_text, re.DOTALL)
-    block_count = len(block_formulas)
-
-    # 去掉独立公式后统计行内
-    text_no_block = re.sub(r'\$\$.*?\$\$', '', md_text, flags=re.DOTALL)
-    inline_formulas = re.findall(r'(?<!\$)\$(?!\$)(.+?)(?<!\$)\$(?!\$)', text_no_block)
-    inline_count = len(inline_formulas)
-
-    return inline_count, block_count
-
 
 def count_docx_formulas(docx_path: str) -> tuple[int, int]:
     """统计 docx 中的 oMath 和 oMathPara 数量"""
@@ -252,11 +248,8 @@ def check_figure_table_integrity(docx_path: str, md_path: str,
 
     # 图表编号连续性
     # 只检查真正的标题段落（"表X 标题内容"格式），排除正文引用（"表X报告了..."）
-    caption_num_pattern = re.compile(r'^[表图]\s*(\d+)\s+.+')
-    ref_verb_pattern = re.compile(
-        r'^[表图]\s*\d+\s*'
-        r'(报告|展示|说明|指出|呈现|反映|列出|给出|揭示了?|显示了?|直观展示了?)'
-    )
+    caption_num_pattern = _CAPTION_NUM_PATTERN
+    ref_verb_pattern = _CAPTION_REF_VERB_PATTERN
     table_nums = []
     figure_nums = []
     for para in doc.paragraphs:
@@ -426,14 +419,7 @@ def check_citations_references(docx_path: str) -> dict:
     full_text = '\n'.join([p.text for p in doc.paragraphs])
 
     # 提取引用编号
-    body_nums = set()
-    for m in re.finditer(r'\[(\d+)\]', full_text):
-        body_nums.add(int(m.group(1)))
-
-    # 提取范围引用 [5-7]
-    for m in re.finditer(r'\[(\d+)\s*[-–—]\s*(\d+)\]', full_text):
-        start, end = int(m.group(1)), int(m.group(2))
-        body_nums.update(range(start, end + 1))
+    body_nums = set(extract_md_citation_numbers(full_text))
 
     result['body_citations'] = sorted(body_nums)
 
@@ -574,12 +560,9 @@ def check_center_misjudgment(docx_path: str) -> dict:
         pass
 
     # 引用模式：表1报告了 / 图1展示了...
-    ref_pattern = re.compile(
-        r'^[表图]\s*\d+\s*'
-        r'(报告|展示|说明|指出|呈现|反映|列出|给出|揭示了?|显示了?|直观展示了?)'
-    )
+    ref_pattern = _CAPTION_REF_VERB_PATTERN
     # 真标题模式
-    caption_pattern = re.compile(r'^[表图]\s*\d+\s+.+')
+    caption_pattern = _CAPTION_NUM_PATTERN
 
     for para in doc.paragraphs:
         text = para.text.strip()
@@ -930,7 +913,7 @@ def main():
     args = parser.parse_args()
 
     if not os.path.exists(args.docx):
-        print(f'错误: docx 文件不存在: {args.docx}')
+        logger.error('docx 文件不存在: %s', args.docx)
         sys.exit(2)
 
     results = {}

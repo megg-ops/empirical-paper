@@ -22,11 +22,16 @@ verify_consistency.py — 论文一致性验证脚本
     当发现不一致时，脚本只报告问题，由调用方决定回退到哪个 Stage 修复。
 """
 
+import logging
 import re
 import sys
 import os
 import json
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+from utils import extract_md_citation_numbers
 
 
 # --- 行过滤白名单 ---
@@ -616,16 +621,6 @@ def extract_md_table_captions(md_text: str) -> list[str]:
 def extract_md_figure_captions(md_text: str) -> list[str]:
     """提取 Markdown 中的图标题（图1、图2...）"""
     return re.findall(r'图\s*(\d+)', md_text)
-
-
-def extract_md_citation_numbers(md_text: str) -> list[int]:
-    """提取 Markdown 中的引用编号 [1], [2], [3-5] 等"""
-    singles = re.findall(r'\[(\d+)\]', md_text)
-    ranges = re.findall(r'\[(\d+)\s*[-–—]\s*(\d+)\]', md_text)
-    numbers = [int(n) for n in singles]
-    for start, end in ranges:
-        numbers.extend(range(int(start), int(end) + 1))
-    return sorted(set(numbers))
 
 
 def verify_markdown(paper_path: str, results_summary: str, skip_word_count: bool = False) -> dict:

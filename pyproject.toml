@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "empirical-paper"
+version = "0.7.0"
+description = "Empirical paper writing skill for Claude Code"
+requires-python = ">=3.10"
+license = "MIT"
+
+dependencies = [
+    "python-docx",
+    "lxml",
+    "pandas",
+    "openpyxl",
+    "matplotlib",
+    "pypandoc",
+    "pypdf",
+    "numpy",
+    "scipy",
+    "statsmodels",
+    "linearmodels",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["scripts"]
+
+[tool.pytest.ini_options]
+testpaths = ["scripts/tests"]
+pythonpath = ["scripts"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]

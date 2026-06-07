@@ -4,5 +4,7 @@ __pycache__/
 .venv/
 paper_workspace/
 *.egg-info/
+.pytest_cache/
+dist/
 .DS_Store
 Thumbs.db
