@@ -85,7 +85,7 @@ pandoc --version
 
 ### 运行
 
-在 Claude Code 对话中输入 `/empirical-paper`，或直接说"帮我写论文"。
+在 Claude Code 对话中输入 `/empirical-paper`，根据当前路径下文件，启动实证论文自动化撰写工作流，输出 docx 格式文件，或直接在对话中问 `/empirical-paper` 这个 skill 怎么用。
 
 工具会自动完成 7 个 Stage，在 Stage 2 和 Stage 4 暂停等你确认，最终输出到 `paper_workspace/final_paper/`。
 
