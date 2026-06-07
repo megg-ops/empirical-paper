@@ -6,7 +6,7 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Pt
+from docx.shared import Pt, RGBColor
 
 from utils import is_caption
 from docx_gen.output import _make_text_run, _make_superscript_run
@@ -21,7 +21,36 @@ def _ensure_style(doc: Document, name: str) -> None:
         doc.styles.add_style(name, WD_STYLE_TYPE.PARAGRAPH)
 
 
-def normalize_heading_styles(doc: Document) -> int:
+def _apply_alignment_from_rule(para, rule: dict) -> None:
+    """根据规则设置段落对齐方式。"""
+    align_str = rule.get("alignment")
+    if not align_str:
+        return
+    mapping = {
+        "左对齐": WD_ALIGN_PARAGRAPH.LEFT,
+        "居中": WD_ALIGN_PARAGRAPH.CENTER,
+        "右对齐": WD_ALIGN_PARAGRAPH.RIGHT,
+        "两端对齐": WD_ALIGN_PARAGRAPH.JUSTIFY,
+    }
+    if align_str in mapping:
+        para.alignment = mapping[align_str]
+
+
+def _apply_line_spacing_from_rule(para, rule: dict) -> None:
+    """根据规则设置段落行距。"""
+    spacing_str = rule.get("line_spacing")
+    if not spacing_str:
+        return
+    try:
+        from docx.enum.text import WD_LINE_SPACING
+        pf = para.paragraph_format
+        pf.line_spacing_rule = WD_LINE_SPACING.MULTIPLE
+        pf.line_spacing = float(spacing_str)
+    except Exception:
+        pass
+
+
+def normalize_heading_styles(doc: Document, template_rules: dict = None) -> int:
     """Fix heading hierarchy:
     - First Heading 1 -> Normal + centered (paper title)
     - Heading 2 -> Heading 1
@@ -33,6 +62,11 @@ def normalize_heading_styles(doc: Document) -> int:
     for s in ("Heading 1", "Heading 2", "Heading 3"):
         _ensure_style(doc, s)
 
+    # Collect rules if available
+    rules = {}
+    if template_rules:
+        rules = template_rules.get("rules", {})
+
     count = 0
     first_h1_seen = False
 
@@ -42,18 +76,77 @@ def normalize_heading_styles(doc: Document) -> int:
             if not first_h1_seen:
                 # Paper title -> Normal, centered
                 para.style = doc.styles["Normal"]
-                para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                _title_rule = rules.get("title", {})
+                _apply_alignment_from_rule(para, _title_rule)
+                _apply_line_spacing_from_rule(para, _title_rule)
+                if _title_rule:
+                    _title_size = _title_rule.get("font_size_pt")
+                    _title_ea = _title_rule.get("font_name_east_asia") or _title_rule.get("font_name", "黑体")
+                    _title_ascii = _title_rule.get("font_name", "Times New Roman")
+                    if _title_ascii in ("宋体", "黑体", "楷体", "仿宋"):
+                        _title_ascii = "Times New Roman"
+                    _title_bold = _title_rule.get("bold")
+                    for run in para.runs:
+                        set_run_fonts(run, east_asia=_title_ea, ascii_font=_title_ascii, font_size_pt=_title_size)
+                        if _title_bold is not None:
+                            run.bold = _title_bold
+                        run.font.color.rgb = RGBColor(0, 0, 0)
                 first_h1_seen = True
                 count += 1
             # else: keep as Heading 1 (was already Heading 2 in markdown)
         elif style_name == "Heading 2":
             para.style = doc.styles["Heading 1"]
+            # Apply heading1 formatting
+            _h1_rule = rules.get("heading1", {})
+            _apply_alignment_from_rule(para, _h1_rule)
+            if _h1_rule:
+                _h1_size = _h1_rule.get("font_size_pt")
+                _h1_ea = _h1_rule.get("font_name_east_asia") or _h1_rule.get("font_name", "宋体")
+                _h1_ascii = _h1_rule.get("font_name", "Times New Roman")
+                if _h1_ascii in ("宋体", "黑体", "楷体", "仿宋"):
+                    _h1_ascii = "Times New Roman"
+                _h1_bold = _h1_rule.get("bold")
+                for run in para.runs:
+                    set_run_fonts(run, east_asia=_h1_ea, ascii_font=_h1_ascii, font_size_pt=_h1_size)
+                    if _h1_bold is not None:
+                        run.bold = _h1_bold
+                    run.font.color.rgb = RGBColor(0, 0, 0)
             count += 1
         elif style_name == "Heading 3":
             para.style = doc.styles["Heading 2"]
+            # Apply heading2 formatting
+            _h2_rule = rules.get("heading2", {})
+            _apply_alignment_from_rule(para, _h2_rule)
+            if _h2_rule:
+                _h2_size = _h2_rule.get("font_size_pt")
+                _h2_ea = _h2_rule.get("font_name_east_asia") or _h2_rule.get("font_name", "宋体")
+                _h2_ascii = _h2_rule.get("font_name", "Times New Roman")
+                if _h2_ascii in ("宋体", "黑体", "楷体", "仿宋"):
+                    _h2_ascii = "Times New Roman"
+                _h2_bold = _h2_rule.get("bold")
+                for run in para.runs:
+                    set_run_fonts(run, east_asia=_h2_ea, ascii_font=_h2_ascii, font_size_pt=_h2_size)
+                    if _h2_bold is not None:
+                        run.bold = _h2_bold
+                    run.font.color.rgb = RGBColor(0, 0, 0)
             count += 1
         elif style_name == "Heading 4":
             para.style = doc.styles["Heading 3"]
+            # Apply heading3 formatting
+            _h3_rule = rules.get("heading3", {})
+            _apply_alignment_from_rule(para, _h3_rule)
+            if _h3_rule:
+                _h3_size = _h3_rule.get("font_size_pt")
+                _h3_ea = _h3_rule.get("font_name_east_asia") or _h3_rule.get("font_name", "宋体")
+                _h3_ascii = _h3_rule.get("font_name", "Times New Roman")
+                if _h3_ascii in ("宋体", "黑体", "楷体", "仿宋"):
+                    _h3_ascii = "Times New Roman"
+                _h3_bold = _h3_rule.get("bold")
+                for run in para.runs:
+                    set_run_fonts(run, east_asia=_h3_ea, ascii_font=_h3_ascii, font_size_pt=_h3_size)
+                    if _h3_bold is not None:
+                        run.bold = _h3_bold
+                    run.font.color.rgb = RGBColor(0, 0, 0)
             count += 1
 
     return count
@@ -182,6 +275,15 @@ def normalize_paragraphs(doc: Document, template_rules: dict = None) -> int:
             ppr.append(ind)
         ind.set(qn("w:firstLineChars"), "200")
         ind.set(qn("w:firstLine"), str(INDENT_TWIPS))
+
+        # 应用正文字号和行距
+        if template_rules:
+            body_rule = template_rules.get("rules", {}).get("body", {})
+            body_size = body_rule.get("font_size_pt")
+            if body_size:
+                for run in para.runs:
+                    run.font.size = Pt(body_size)
+            _apply_line_spacing_from_rule(para, body_rule)
 
         count += 1
 
