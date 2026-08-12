@@ -1,0 +1,59 @@
+{
+  "figures": [
+    {
+      "id": "fig_01",
+      "title": "企业数字化能力与营业收入增长率散点图",
+      "path": "figures/fig_01_scatter.png",
+      "required": true
+    },
+    {
+      "id": "fig_02",
+      "title": "各行业平均数字化能力与营业收入增长率",
+      "path": "figures/fig_02_industry_comparison.png",
+      "required": true
+    },
+    {
+      "id": "fig_03",
+      "title": "各区域平均数字化能力与营业收入增长率",
+      "path": "figures/fig_03_region_comparison.png",
+      "required": true
+    }
+  ],
+  "tables": [
+    {
+      "id": "table_01",
+      "title": "变量描述性统计",
+      "path": "tables/tab_01_desc_stats.md",
+      "required": true,
+      "preferred_display": "markdown_table"
+    },
+    {
+      "id": "table_02",
+      "title": "相关系数矩阵",
+      "path": "tables/tab_02_correlation.md",
+      "required": true,
+      "preferred_display": "markdown_table"
+    },
+    {
+      "id": "table_03",
+      "title": "基准回归结果",
+      "path": "tables/tab_03_baseline.md",
+      "required": true,
+      "preferred_display": "markdown_table"
+    },
+    {
+      "id": "table_04",
+      "title": "异质性分析结果",
+      "path": "tables/tab_04_heterogeneity.md",
+      "required": true,
+      "preferred_display": "markdown_table"
+    },
+    {
+      "id": "table_05",
+      "title": "稳健性检验结果",
+      "path": "tables/tab_05_robustness.md",
+      "required": true,
+      "preferred_display": "markdown_table"
+    }
+  ]
+}

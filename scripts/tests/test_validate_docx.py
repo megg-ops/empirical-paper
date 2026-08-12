@@ -1,7 +1,15 @@
 from docx import Document
 
 from utils import _CAPTION_NUM_PATTERN
-from validate_docx import check_figure_table_integrity, count_docx_formulas
+import json
+
+from validate_docx import (
+    check_assets_completeness,
+    check_center_misjudgment,
+    check_figure_table_integrity,
+    check_long_bold_run,
+    count_docx_formulas,
+)
 
 
 def test_caption_pattern_exposes_number_group():
@@ -26,3 +34,35 @@ def test_minimal_docx_has_no_formulas(tmp_path):
     path = tmp_path / "paper.docx"
     doc.save(path)
     assert count_docx_formulas(str(path)) == (0, 0)
+
+
+def test_assets_resolve_relative_to_manifest(tmp_path):
+    output = tmp_path / "output"
+    (output / "tables").mkdir(parents=True)
+    (output / "tables/t.md").write_text("|x|\n|-|\n|1|", encoding="utf-8")
+    manifest = output / "assets_manifest.json"
+    manifest.write_text(json.dumps({
+        "tables": [{"id": "t", "path": "tables/t.md", "required": True}],
+        "figures": [],
+    }), encoding="utf-8")
+    doc = Document()
+    doc.add_table(rows=1, cols=1)
+    paper = tmp_path / "paper.docx"
+    doc.save(paper)
+    result = check_assets_completeness(str(paper), None, str(manifest))
+    assert result["status"] == "pass"
+
+
+def test_first_paragraph_is_allowed_as_centered_bold_title(tmp_path):
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    doc = Document()
+    title = doc.add_paragraph()
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = title.add_run("这是一个长度超过三十个汉字并且应当正常居中加粗显示的完整论文标题示例文本")
+    run.bold = True
+    doc.add_paragraph("正文")
+    path = tmp_path / "paper.docx"
+    doc.save(path)
+    assert check_long_bold_run(str(path))["status"] == "pass"
+    assert check_center_misjudgment(str(path))["status"] == "pass"

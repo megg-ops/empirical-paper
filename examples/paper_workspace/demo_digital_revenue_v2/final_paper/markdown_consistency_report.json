@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "kind": "quality_gate_result",
+  "tool": "verify_consistency",
+  "generated_at": "2026-08-12T22:41:32+08:00",
+  "verdict": "PASS",
+  "checks": {
+    "structured_numbers": {
+      "status": "PASS",
+      "issues": [],
+      "reportable_value_count": 44,
+      "must_report_checked": 18,
+      "invalid_entries": 0
+    },
+    "citations": {
+      "status": "PASS",
+      "issues": [],
+      "cited": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "references": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "assets": {
+      "status": "PASS",
+      "issues": [],
+      "declared_count": 8,
+      "referenced_count": 8
+    },
+    "placeholders": {
+      "status": "PASS",
+      "issues": [],
+      "matches": []
+    },
+    "format_integrity": {
+      "status": "PASS",
+      "issues": []
+    },
+    "word_count": {
+      "status": "PASS",
+      "issues": [],
+      "skipped": true,
+      "reason": "Stage 4 已执行独立字数门禁"
+    }
+  },
+  "metadata": {
+    "paper": "examples/paper_workspace/demo_digital_revenue_v2/04_writer/output/paper_draft.md",
+    "format": "markdown",
+    "results_json": "examples/paper_workspace/demo_digital_revenue_v2/03_coder/output/results.json"
+  }
+}

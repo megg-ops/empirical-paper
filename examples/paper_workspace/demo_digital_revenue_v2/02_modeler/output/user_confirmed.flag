@@ -1,0 +1,5 @@
+user_confirmed at 2026-08-12T20:20:00+08:00
+context: V2 demo fixture rebuilt under the user-approved workflow decisions
+method: OLS + HC1 robust SE + industry/region dummies
+interpretation: correlation only, no causal claims
+stage2_verdict: PASS

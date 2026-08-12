@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "actual_words": 5082,
+  "counts": {
+    "total": 5082,
+    "chinese": 4938,
+    "english": 30,
+    "digits": 114
+  },
+  "requirement": {
+    "mode": "range",
+    "target": null,
+    "minimum": 5000,
+    "maximum": 7000,
+    "source": "user",
+    "confirmed_by_user": true,
+    "scope": {
+      "include_abstract": true,
+      "include_title": false,
+      "include_keywords": false,
+      "include_references": false,
+      "include_acknowledgements": false,
+      "include_appendices": false,
+      "include_table_cells": false,
+      "include_table_captions": true,
+      "include_figure_captions": true,
+      "include_formulas": false,
+      "include_code_blocks": false
+    }
+  },
+  "status": "OK",
+  "minimum_required": 5000,
+  "maximum_allowed": 7000,
+  "short_by": 0,
+  "over_by": 0,
+  "needs_user_decision": false
+}

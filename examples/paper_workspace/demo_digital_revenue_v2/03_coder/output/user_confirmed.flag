@@ -1,0 +1,5 @@
+user_confirmed at 2026-08-12T20:30:00+08:00
+context: V2 demo fixture rebuilt under the user-approved workflow decisions
+core_findings: digital_score beta=0.132, p<0.001, R2=0.337
+robustness: stable across specifications
+diagnostics: no issues

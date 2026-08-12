@@ -1,0 +1,30 @@
+{
+  "primary_table": "examples/demo_case/data.xlsx::data",
+  "observation_unit": {
+    "label": "企业",
+    "status": "confirmed",
+    "source": "framework",
+    "evidence": ["framework.md: 每一行代表一家企业的截面观测"]
+  },
+  "variables": [
+    {"column": "firm_id", "semantic_type": "identifier", "unit": null, "roles": ["observation_id", "entity_id"], "status": "confirmed", "source": "data_dictionary", "confidence": "high", "evidence": ["企业编号，合成样本唯一标识"], "constraints": {"required_non_missing": true}},
+    {"column": "industry", "semantic_type": "nominal", "unit": null, "roles": ["control", "fixed_effect", "group"], "status": "confirmed", "source": "data_dictionary", "confidence": "high", "evidence": ["企业所属行业"], "constraints": {"required_non_missing": true}},
+    {"column": "region", "semantic_type": "nominal", "unit": null, "roles": ["control", "fixed_effect", "group"], "status": "confirmed", "source": "data_dictionary", "confidence": "high", "evidence": ["企业所在区域"], "constraints": {"required_non_missing": true}},
+    {"column": "revenue_growth_pct", "semantic_type": "continuous", "unit": "percentage_point", "roles": ["outcome"], "status": "confirmed", "source": "framework", "confidence": "high", "evidence": ["被解释变量：企业近一年营业收入增长率"], "constraints": {"required_non_missing": true}},
+    {"column": "digital_score", "semantic_type": "continuous", "unit": "index_0_100", "roles": ["predictor"], "status": "confirmed", "source": "framework", "confidence": "high", "evidence": ["核心解释变量：企业数字化能力指数"], "constraints": {"required_non_missing": true, "minimum": 0, "maximum": 100}},
+    {"column": "firm_age_years", "semantic_type": "count", "unit": "year", "roles": ["control"], "status": "confirmed", "source": "framework", "confidence": "high", "evidence": ["建议控制变量"], "constraints": {"required_non_missing": true, "minimum": 0}},
+    {"column": "employees", "semantic_type": "count", "unit": "person", "roles": ["control"], "status": "confirmed", "source": "framework", "confidence": "high", "evidence": ["建议控制变量"], "constraints": {"required_non_missing": true, "minimum": 1}},
+    {"column": "rd_intensity_pct", "semantic_type": "proportion", "unit": "percent", "roles": ["control"], "status": "confirmed", "source": "framework", "confidence": "high", "evidence": ["研发投入强度"], "constraints": {"required_non_missing": true, "minimum": 0}},
+    {"column": "marketing_intensity_pct", "semantic_type": "proportion", "unit": "percent", "roles": ["control"], "status": "confirmed", "source": "framework", "confidence": "high", "evidence": ["营销投入强度"], "constraints": {"required_non_missing": true, "minimum": 0}},
+    {"column": "manager_edu_years", "semantic_type": "count", "unit": "year", "roles": ["control"], "status": "confirmed", "source": "framework", "confidence": "high", "evidence": ["管理者受教育年限"], "constraints": {"required_non_missing": true, "minimum": 0}},
+    {"column": "export_dummy", "semantic_type": "binary", "unit": null, "roles": ["control"], "status": "confirmed", "source": "data_dictionary", "confidence": "high", "evidence": ["是否有出口业务"], "constraints": {"required_non_missing": true, "allowed_values": [0, 1]}},
+    {"column": "financing_constraint", "semantic_type": "ordinal", "unit": "level_1_5", "roles": ["control"], "status": "confirmed", "source": "data_dictionary", "confidence": "high", "evidence": ["融资约束程度"], "constraints": {"required_non_missing": true, "allowed_values": [1, 2, 3, 4, 5]}},
+    {"column": "labor_productivity", "semantic_type": "continuous", "unit": "index", "roles": ["auxiliary"], "status": "confirmed", "source": "framework", "confidence": "high", "evidence": ["仅作为可选描述变量"], "constraints": {"required_non_missing": true, "minimum": 0}}
+  ],
+  "join_requests": [],
+  "structure_assessment": {
+    "candidates": [{"type": "cross_section", "confidence": "high", "evidence": ["无时间字段；180 个唯一 firm_id"]}],
+    "confirmed_type": "cross_section"
+  },
+  "resolutions": []
+}

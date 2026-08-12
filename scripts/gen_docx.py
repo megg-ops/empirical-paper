@@ -114,6 +114,11 @@ def load_assets_manifest(path: str | None, manifest: dict = None) -> dict:
         return {}
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
+        # manifest 内的相对路径以 manifest 所在目录为基准，避免依赖调用时 cwd。
+        for item in [*data.get("figures", []), *data.get("tables", [])]:
+            raw = item.get("path")
+            if raw and not Path(raw).is_absolute():
+                item["path"] = str((p.parent / raw).resolve())
         fig_count = len(data.get("figures", []))
         tbl_count = len(data.get("tables", []))
         logger.info("assets_manifest loaded: %s (%d figures, %d tables)", path, fig_count, tbl_count)

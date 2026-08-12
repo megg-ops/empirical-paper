@@ -1,0 +1,47 @@
+{
+  "schema_version": 2,
+  "run_id": "demo_digital_revenue_v2",
+  "workspace_root": "examples/paper_workspace/demo_digital_revenue_v2",
+  "project_title": "企业数字化能力与营业收入增长的相关性分析",
+  "created_at": "2026-08-12T20:00:00+08:00",
+  "output_format": "docx",
+  "status": "completed",
+  "framework_file": "examples/demo_case/framework.md",
+  "data_files": [
+    "examples/demo_case/data.xlsx"
+  ],
+  "template_file": null,
+  "word_template_file": null,
+  "references_dir": null,
+  "paper_requirements": {
+    "word_count": {
+      "mode": "range",
+      "target": null,
+      "minimum": 5000,
+      "maximum": 7000,
+      "source": "user",
+      "confirmed_by_user": true,
+      "scope": {
+        "include_abstract": true,
+        "include_title": false,
+        "include_keywords": false,
+        "include_references": false,
+        "include_acknowledgements": false,
+        "include_appendices": false,
+        "include_table_cells": false,
+        "include_table_captions": true,
+        "include_figure_captions": true,
+        "include_formulas": false,
+        "include_code_blocks": false
+      }
+    }
+  },
+  "tool_paths": {"pandoc": "auto"},
+  "dependency_status": {"pandoc": "found"},
+  "selection_notes": {
+    "framework": "仓库内置 Demo framework",
+    "data": "用户确认 data Sheet 为主分析表；variable_dictionary 提供语义依据",
+    "word_count": "用户确认 range 5000-7000 与统一默认统计范围"
+  },
+  "warnings": []
+}

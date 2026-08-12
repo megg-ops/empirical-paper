@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "kind": "quality_gate_result",
+  "tool": "validate_docx",
+  "generated_at": "2026-08-12T22:41:33+08:00",
+  "verdict": "PASS",
+  "checks": {
+    "openability": {
+      "status": "PASS",
+      "issues": []
+    },
+    "formula_integrity": {
+      "status": "PASS",
+      "issues": [],
+      "md_inline": 29,
+      "md_block": 2,
+      "docx_omath": 31,
+      "docx_omathpara": 2,
+      "latex_residue": [],
+      "loss_sentences": []
+    },
+    "figure_table": {
+      "status": "PASS",
+      "issues": [],
+      "md_images": 0,
+      "docx_images": 3,
+      "table_nums": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "figure_nums": [
+        1,
+        2,
+        3
+      ]
+    },
+    "table_structure": {
+      "status": "PASS",
+      "issues": [],
+      "table_count": 6,
+      "table_details": [
+        "表1: 12行×5列",
+        "表2: 11行×6列",
+        "表3: 7行×7列",
+        "表4: 15行×4列",
+        "表5: 10行×7列",
+        "表6: 6行×5列"
+      ]
+    },
+    "font_paragraph": {
+      "status": "PASS",
+      "issues": []
+    },
+    "citations": {
+      "status": "PASS",
+      "issues": [],
+      "body_citations": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reference_citations": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "long_bold_run": {
+      "status": "PASS",
+      "issues": [],
+      "details": []
+    },
+    "center_misjudgment": {
+      "status": "PASS",
+      "issues": [],
+      "details": []
+    },
+    "template_compliance": {
+      "status": "PASS",
+      "issues": [],
+      "details": []
+    },
+    "assets_completeness": {
+      "status": "PASS",
+      "issues": [],
+      "stats": {
+        "assets_manifest": "examples/paper_workspace/demo_digital_revenue_v2/03_coder/output/assets_manifest.json",
+        "required_figures": 3,
+        "required_tables": 5,
+        "docx_tables": 6,
+        "docx_images": 3,
+        "leftover_figure_placeholders": 0,
+        "leftover_table_placeholders": 0
+      }
+    }
+  },
+  "metadata": {
+    "docx": "examples/paper_workspace/demo_digital_revenue_v2/final_paper/paper_final.docx"
+  }
+}

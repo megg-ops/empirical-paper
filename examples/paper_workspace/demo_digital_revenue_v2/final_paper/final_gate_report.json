@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "kind": "quality_gate_result",
+  "tool": "final_quality_gate",
+  "generated_at": "2026-08-12T22:41:33+08:00",
+  "verdict": "PASS",
+  "checks": {
+    "method_fit": {
+      "status": "PASS",
+      "issues": []
+    },
+    "structured_results": {
+      "status": "PASS",
+      "issues": []
+    },
+    "word_count": {
+      "status": "PASS",
+      "issues": [],
+      "source": "examples/paper_workspace/demo_digital_revenue_v2/04_writer/output/word_count_report.json"
+    },
+    "final_file": {
+      "status": "PASS",
+      "issues": [],
+      "source": "examples/paper_workspace/demo_digital_revenue_v2/final_paper/paper_final.docx"
+    },
+    "markdown_consistency": {
+      "status": "PASS",
+      "issues": [],
+      "source": "examples/paper_workspace/demo_digital_revenue_v2/final_paper/markdown_consistency_report.json",
+      "source_verdict": "PASS"
+    },
+    "docx_validation": {
+      "status": "PASS",
+      "issues": [],
+      "source": "examples/paper_workspace/demo_digital_revenue_v2/final_paper/docx_validation_report.json",
+      "source_verdict": "PASS"
+    },
+    "docx_consistency": {
+      "status": "PASS",
+      "issues": [],
+      "source": "examples/paper_workspace/demo_digital_revenue_v2/final_paper/docx_consistency_report.json",
+      "source_verdict": "PASS"
+    }
+  },
+  "metadata": {
+    "workspace": "examples/paper_workspace/demo_digital_revenue_v2",
+    "output_format": "docx"
+  }
+}

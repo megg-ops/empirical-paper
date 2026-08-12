@@ -479,9 +479,13 @@ def check_long_bold_run(docx_path: str) -> dict:
     except Exception:
         pass
 
+    first_content = next((p for p in doc.paragraphs if p.text.strip()), None)
     for para in doc.paragraphs:
         text = para.text.strip()
         if not text:
+            continue
+        # 文档首个非空段落是论文标题；居中加粗属于标题正常格式。
+        if first_content is not None and para._p is first_content._p:
             continue
         # 跳过标题
         if para.style and para.style.name and para.style.name.startswith('Heading'):
@@ -565,9 +569,12 @@ def check_center_misjudgment(docx_path: str) -> dict:
     # 真标题模式
     caption_pattern = _CAPTION_NUM_PATTERN
 
+    first_content = next((p for p in doc.paragraphs if p.text.strip()), None)
     for para in doc.paragraphs:
         text = para.text.strip()
         if not text:
+            continue
+        if first_content is not None and para._p is first_content._p:
             continue
         # 只检查居中的段落
         if para.alignment != WD_ALIGN_PARAGRAPH.CENTER:
@@ -623,6 +630,12 @@ def check_assets_completeness(docx_path: str, md_path: str, assets_manifest_path
         result['issues'].append(f'assets_manifest 读取失败: {e}')
         return result
 
+    manifest_dir = Path(assets_manifest_path).resolve().parent
+
+    def asset_path(item: dict) -> Path:
+        path = Path(item['path'])
+        return path if path.is_absolute() else manifest_dir / path
+
     fig_map = {f['id']: f for f in assets.get('figures', [])}
     tbl_map = {t['id']: t for t in assets.get('tables', [])}
 
@@ -663,7 +676,7 @@ def check_assets_completeness(docx_path: str, md_path: str, assets_manifest_path
     # Check that required figure files exist
     missing_fig_files = []
     for fig in required_figs:
-        if not os.path.exists(fig['path']):
+        if not asset_path(fig).exists():
             missing_fig_files.append(fig['id'])
     if missing_fig_files:
         result['status'] = 'block'
@@ -672,7 +685,7 @@ def check_assets_completeness(docx_path: str, md_path: str, assets_manifest_path
     # Check that required table files exist
     missing_tbl_files = []
     for tbl in required_tbls:
-        if not os.path.exists(tbl['path']):
+        if not asset_path(tbl).exists():
             missing_tbl_files.append(tbl['id'])
     if missing_tbl_files:
         result['status'] = 'block'

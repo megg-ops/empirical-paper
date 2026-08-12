@@ -140,14 +140,15 @@ def _profile_column(name: str, series: pd.Series) -> tuple[dict, list[dict]]:
 
 def _table_profile(path: Path, sheet: str | None, frame: pd.DataFrame) -> tuple[dict, list[dict]]:
     issues: list[dict] = []
+    table_ref = {"source_path": path.as_posix(), "sheet": sheet}
     duplicate_columns = frame.columns[frame.columns.duplicated()].astype(str).tolist()
     if duplicate_columns:
-        issues.append(_issue("duplicate_columns", "BLOCKER", "存在重复列名", evidence=duplicate_columns))
+        issues.append(_issue("duplicate_columns", "BLOCKER", "存在重复列名", evidence={**table_ref, "columns": duplicate_columns}))
     duplicate_rows = int(frame.duplicated().sum())
     if duplicate_rows:
-        issues.append(_issue("duplicate_rows", "WARN", "存在完全重复行", evidence=duplicate_rows))
+        issues.append(_issue("duplicate_rows", "WARN", "存在完全重复行", evidence={**table_ref, "count": duplicate_rows}))
     if frame.empty or len(frame.columns) == 0:
-        issues.append(_issue("empty_table", "BLOCKER", "数据表为空或没有列"))
+        issues.append(_issue("empty_table", "BLOCKER", "数据表为空或没有列", evidence=table_ref))
 
     variables = []
     for col in frame.columns:
@@ -485,7 +486,8 @@ def render_report(result: dict) -> str:
     if result.get("issues"):
         for item in result["issues"]:
             resolved = "（已解决）" if item.get("resolution") else ""
-            lines.append(f"- **{item['severity']}** `{item['code']}`：{item['message']}{resolved}")
+            evidence = f"；证据：`{json.dumps(item['evidence'], ensure_ascii=False)}`" if "evidence" in item else ""
+            lines.append(f"- **{item['severity']}** `{item['code']}`：{item['message']}{resolved}{evidence}")
     else:
         lines.append("- 无")
     lines.extend(["", "## 方法条件（不作模型推荐）", ""])
