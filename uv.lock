@@ -223,8 +223,8 @@ wheels = [
 
 [[package]]
 name = "empirical-paper"
-version = "0.7.0"
-source = { editable = "." }
+version = "0.8.0"
+source = { virtual = "." }
 dependencies = [
     { name = "linearmodels" },
     { name = "lxml" },
@@ -238,11 +238,6 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "statsmodels" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pytest" },
 ]
 
 [package.dev-dependencies]
@@ -260,12 +255,10 @@ requires-dist = [
     { name = "pandas" },
     { name = "pypandoc" },
     { name = "pypdf" },
-    { name = "pytest", marker = "extra == 'dev'" },
     { name = "python-docx" },
     { name = "scipy" },
     { name = "statsmodels" },
 ]
-provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=8.4.2" }]

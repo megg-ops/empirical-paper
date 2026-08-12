@@ -38,6 +38,7 @@ from utils import (
     _CAPTION_NUM_PATTERN,
     _CAPTION_REF_VERB_PATTERN,
 )
+from quality_contract import make_quality_result, write_json
 
 
 # ==================== Check A: Openability ====================
@@ -909,6 +910,7 @@ def main():
     parser.add_argument('--template-rules', default=None, help='template_rules.json 路径（可选）')
     parser.add_argument('--assets-manifest', default=None, help='assets_manifest.json 路径（可选）')
     parser.add_argument('--output', required=True, help='验证报告输出路径')
+    parser.add_argument('--json-output', help='结构化质量结果 JSON 路径')
 
     args = parser.parse_args()
 
@@ -924,6 +926,8 @@ def main():
         # 无法打开则跳过后续检查
         report = generate_report(results)
         _write_report(report, args.output)
+        quality = make_quality_result('validate_docx', results, metadata={'docx': args.docx})
+        write_json(quality, args.json_output or os.path.splitext(args.output)[0] + '.json')
         sys.exit(2)
 
     # Check B
@@ -958,14 +962,17 @@ def main():
     # 生成报告
     report = generate_report(results)
     _write_report(report, args.output)
+    quality = make_quality_result('validate_docx', results, metadata={'docx': args.docx})
+    json_output = args.json_output or os.path.splitext(args.output)[0] + '.json'
+    write_json(quality, json_output)
 
     # 打印报告
     print(report)
     print(f'\n报告已写入: {args.output}')
+    print(f'结构化结果已写入: {json_output}')
 
     # Exit code
-    has_blocker = any(v.get('status') == 'block' for v in results.values())
-    sys.exit(2 if has_blocker else 0)
+    sys.exit(2 if quality['verdict'] in {'FAIL', 'INCOMPLETE'} else 0)
 
 
 def _write_report(report: str, output_path: str):

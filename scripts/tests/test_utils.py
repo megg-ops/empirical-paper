@@ -7,6 +7,8 @@ from utils import (
     count_chinese_words,
     is_caption,
     extract_md_citation_numbers,
+    count_paper_words,
+    evaluate_word_count,
 )
 
 
@@ -71,6 +73,16 @@ class TestCountChineseWords:
         assert result == 4  # "正文" + "结束"
 
 
+def test_unified_scope_can_exclude_abstract_and_captions():
+    text = "# 标题\n## 摘要\n摘要文字\n## 正文\n正文文字\n表1 回归结果\n图1 趋势"
+    counts = count_paper_words(text, {
+        "include_abstract": False,
+        "include_table_captions": False,
+        "include_figure_captions": False,
+    })
+    assert counts["total"] == 4
+
+
 # ---- is_caption ----
 
 class TestIsCaption:
@@ -113,3 +125,18 @@ class TestExtractMdCitationNumbers:
 
     def test_dedup_and_sort(self):
         assert extract_md_citation_numbers("[3][1][3][2]") == [1, 2, 3]
+
+
+def test_unified_word_count_excludes_headings_formula_table_and_references():
+    text = "# 标题\n正文 test 123。$x=1$\n| 表格 | 999 |\n# 参考文献\n不计入"
+    result = count_paper_words(text)
+    assert result == {"total": 4, "chinese": 2, "english": 1, "digits": 1}
+
+
+def test_range_word_requirement():
+    req = {"mode": "range", "minimum": 5000, "maximum": 7000,
+           "source": "user", "confirmed_by_user": True}
+    assert evaluate_word_count(4999, req)["status"] == "SHORT"
+    assert evaluate_word_count(5000, req)["status"] == "OK"
+    assert evaluate_word_count(7000, req)["status"] == "OK"
+    assert evaluate_word_count(7001, req)["status"] == "OVER"

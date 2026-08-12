@@ -24,6 +24,8 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+from utils import validate_word_count_requirement
+
 
 def _resolve_paper_workspace():
     """找到 paper_workspace 下的唯一 run_id 目录（兼容旧接口）。"""
@@ -54,16 +56,41 @@ def _dir_ok(path: str) -> bool:
 
 
 def _read_manifest(ws: Path):
-    """读取 manifest.json，返回 data_file 路径和 output_format。"""
+    """读取 manifest.json，返回 data_files 路径和 output_format。"""
     manifest_path = ws / "00_intake" / "output" / "manifest.json"
     if not manifest_path.exists():
         return None, None
     try:
         with open(manifest_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        return data.get("data_file"), data.get("output_format", "latex")
+        files = data.get("data_files") or []
+        return files, data.get("output_format", "latex")
     except (json.JSONDecodeError, KeyError):
-        return None, None
+        return [], None
+
+
+def _manifest_requirement_ok(ws: Path) -> tuple[bool, str]:
+    path = ws / "00_intake" / "output" / "manifest.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        validate_word_count_requirement(data["paper_requirements"]["word_count"])
+        return True, "字数要求: 用户已确认"
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        return False, f"manifest 字数要求无效: {exc}"
+
+
+def _variable_map_status(ws: Path) -> tuple[bool, str]:
+    path = ws / "01_audit" / "output" / "variable_map.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("schema_version") != 2:
+            return False, "variable_map.json 不是 schema v2"
+        status = data.get("status")
+        if status not in {"PASS", "WARN"}:
+            return False, f"Stage 1 尚未解决: {status}"
+        return True, f"variable_map.json: schema v2 / {status}"
+    except (OSError, json.JSONDecodeError) as exc:
+        return False, f"variable_map.json 无法解析: {exc}"
 
 
 def _has_figures(ws: Path) -> bool:
@@ -106,7 +133,7 @@ def check_stage(stage: int, ws: Path) -> dict:
     checked = []
     details = []
 
-    data_file, output_format = _read_manifest(ws)
+    data_files, output_format = _read_manifest(ws)
 
     if stage == 0:
         # Stage 0: 只检查是否有材料
@@ -135,16 +162,22 @@ def check_stage(stage: int, ws: Path) -> dict:
             elif kind == "file":
                 details.append(f"{label}: OK")
         # data file from manifest (mandatory)
-        if data_file:
+        if data_files:
             checked.append("数据文件")
-            if not _file_ok(data_file):
-                missing.append(data_file)
-            else:
-                details.append(f"数据文件: OK")
+            for data_file in data_files:
+                if not _file_ok(data_file):
+                    missing.append(data_file)
+                else:
+                    details.append(f"数据文件: OK ({data_file})")
         else:
             checked.append("数据文件")
-            missing.append("manifest.json:data_file (数据文件为必填项)")
-            details.append("数据文件: manifest.json 中缺少 data_file")
+            missing.append("manifest.json:data_files (数据文件为必填项)")
+            details.append("数据文件: manifest.json 中缺少 data_files")
+        checked.append("已确认字数要求")
+        req_ok, req_detail = _manifest_requirement_ok(ws)
+        details.append(req_detail)
+        if not req_ok:
+            missing.append("manifest.json:paper_requirements.word_count")
 
     elif stage == 2:
         items = [
@@ -158,6 +191,11 @@ def check_stage(stage: int, ws: Path) -> dict:
                 missing.append(path)
             else:
                 details.append(f"{label}: OK")
+        checked.append("variable_map schema/status")
+        vm_ok, vm_detail = _variable_map_status(ws)
+        details.append(vm_detail)
+        if not vm_ok:
+            missing.append("variable_map.json schema v2 PASS/WARN")
 
     elif stage == 3:
         # 需要 Stage 2 的 user_confirmed.flag
@@ -179,12 +217,13 @@ def check_stage(stage: int, ws: Path) -> dict:
                 missing.append(path)
             else:
                 details.append(f"{label}: OK")
-        if data_file:
+        if data_files:
             checked.append("数据文件")
-            if not _file_ok(data_file):
-                missing.append(data_file)
-            else:
-                details.append("数据文件: OK")
+            for data_file in data_files:
+                if not _file_ok(data_file):
+                    missing.append(data_file)
+                else:
+                    details.append("数据文件: OK")
 
     elif stage == 4:
         # 需要 Stage 3 的 user_confirmed.flag
@@ -290,7 +329,14 @@ def check_stage(stage: int, ws: Path) -> dict:
                     if not _file_ok(str(decision_path)):
                         missing.append(str(decision_path))
                     else:
-                        details.append("user_wordcount_decision.json: OK")
+                        try:
+                            decision = json.loads(decision_path.read_text(encoding="utf-8"))
+                            if decision.get("decision") != "accept_short" or decision.get("confirmed_by_user") is not True:
+                                missing.append(f"{decision_path} invalid_decision")
+                            else:
+                                details.append("user_wordcount_decision.json: 用户确认 accept_short")
+                        except (OSError, json.JSONDecodeError):
+                            missing.append(f"{decision_path} parse_error")
             except (json.JSONDecodeError, OSError):
                 missing.append(f"{wcr_path} parse_error")
                 details.append("word_count_report.json: 解析失败，Stage 5 不得继续")

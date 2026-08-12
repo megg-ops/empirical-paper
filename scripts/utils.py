@@ -14,6 +14,21 @@ import re
 from pathlib import Path
 
 
+DEFAULT_WORD_COUNT_SCOPE = {
+    "include_abstract": True,
+    "include_title": False,
+    "include_keywords": False,
+    "include_references": False,
+    "include_acknowledgements": False,
+    "include_appendices": False,
+    "include_table_cells": False,
+    "include_table_captions": True,
+    "include_figure_captions": True,
+    "include_formulas": False,
+    "include_code_blocks": False,
+}
+
+
 # ---------------------------------------------------------------------------
 # 1. 公式计数（来自 gen_docx.py:455-470 / validate_docx.py:82-93）
 # ---------------------------------------------------------------------------
@@ -104,11 +119,139 @@ def count_chinese_words(text: str) -> int:
     return chinese_count + english_count
 
 
+def extract_countable_text(text: str, scope: dict | None = None) -> str:
+    """按统一论文口径提取可计数字符串（Markdown/LaTeX 轻量兼容）。"""
+    rules = {**DEFAULT_WORD_COUNT_SCOPE, **(scope or {})}
+    cleaned = text.replace("\r\n", "\n")
+    if not rules["include_code_blocks"]:
+        cleaned = re.sub(r"```.*?```", "", cleaned, flags=re.DOTALL)
+    if not rules["include_formulas"]:
+        cleaned = re.sub(r"\$\$.*?\$\$", "", cleaned, flags=re.DOTALL)
+        cleaned = re.sub(r"(?<!\$)\$(?!\$).*?(?<!\$)\$(?!\$)", "", cleaned, flags=re.DOTALL)
+        cleaned = re.sub(r"\\\[.*?\\\]", "", cleaned, flags=re.DOTALL)
+        cleaned = re.sub(r"\\\(.*?\\\)", "", cleaned, flags=re.DOTALL)
+
+    stop_sections = []
+    if not rules["include_references"]:
+        stop_sections.extend(["参考文献", "References"])
+    if not rules["include_acknowledgements"]:
+        stop_sections.extend(["致谢", "Acknowledgements", "Acknowledgments"])
+    if not rules["include_appendices"]:
+        stop_sections.extend(["附录", "Appendix"])
+    if stop_sections:
+        marker = re.compile(
+            r"^(?:#{1,6}\s*|\\(?:section|section\*)\{)?(?:" + "|".join(map(re.escape, stop_sections)) + r")(?:\}|\s*)$",
+            re.MULTILINE | re.IGNORECASE,
+        )
+        match = marker.search(cleaned)
+        if match:
+            cleaned = cleaned[:match.start()]
+
+    if not rules["include_abstract"]:
+        abstract = re.compile(
+            r"^(?:#{1,6}\s*|\\(?:section|section\*)\{)?(?:摘要|Abstract)(?:\}|\s*)$.*?(?=^(?:#{1,6}\s+|\\(?:section|section\*)\{)|\Z)",
+            re.MULTILINE | re.IGNORECASE | re.DOTALL,
+        )
+        cleaned = abstract.sub("", cleaned)
+
+    cleaned = re.sub(r"!\[[^\]]*\]\([^)]+\)", "", cleaned)
+    cleaned = re.sub(r"\[FIGURE:\s*[^\]]+\]|\[TABLE:\s*[^\]]+\]", "", cleaned)
+    cleaned = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", cleaned)
+    lines = []
+    for line in cleaned.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("|") and stripped.endswith("|"):
+            if rules["include_table_cells"]:
+                lines.append(stripped)
+            continue
+        if re.match(r"^\s*\\(?:begin|end|usepackage|documentclass|input|includegraphics)", stripped):
+            continue
+        is_heading = bool(re.match(r"^#{1,6}\s+", stripped) or re.match(r"^\\(?:section|subsection|subsubsection)\*?\{", stripped))
+        if is_heading and not rules["include_title"]:
+            continue
+        if not rules["include_keywords"] and re.match(r"^(关键词|Keywords?)\s*[：:]", stripped, re.IGNORECASE):
+            continue
+        if re.match(r"^(表|Table)\s*\d+", stripped, re.IGNORECASE) and not rules["include_table_captions"]:
+            continue
+        if re.match(r"^(图|Figure|Fig\.)\s*\d+", stripped, re.IGNORECASE) and not rules["include_figure_captions"]:
+            continue
+        lines.append(line)
+    cleaned = "\n".join(lines)
+    cleaned = re.sub(r"\\[a-zA-Z]+\*?(?:\[[^\]]*\])?", "", cleaned)
+    cleaned = re.sub(r"[{}#*_`>]", "", cleaned)
+    return cleaned
+
+
+def count_paper_words(text: str, scope: dict | None = None) -> dict:
+    """统一统计中文字符、英文单词和数字 token。"""
+    cleaned = extract_countable_text(text, scope)
+    chinese = re.findall(r"[\u4e00-\u9fff]", cleaned)
+    english = re.findall(r"[A-Za-z]+(?:[-'][A-Za-z]+)*", cleaned)
+    digits = re.findall(r"(?<![A-Za-z])[-+]?\d+(?:\.\d+)?%?", cleaned)
+    return {
+        "total": len(chinese) + len(english) + len(digits),
+        "chinese": len(chinese),
+        "english": len(english),
+        "digits": len(digits),
+    }
+
+
+def validate_word_count_requirement(requirement: dict) -> dict:
+    """校验并规范 Stage 0 已确认的字数要求。"""
+    mode = requirement.get("mode")
+    if mode not in {"exact", "minimum", "range"}:
+        raise ValueError("word_count.mode 必须为 exact/minimum/range")
+    if requirement.get("confirmed_by_user") is not True:
+        raise ValueError("字数要求必须由用户确认")
+    normalized = {
+        "mode": mode,
+        "target": requirement.get("target"),
+        "minimum": requirement.get("minimum"),
+        "maximum": requirement.get("maximum"),
+        "source": requirement.get("source"),
+        "confirmed_by_user": True,
+        "scope": {**DEFAULT_WORD_COUNT_SCOPE, **requirement.get("scope", {})},
+    }
+    if mode == "exact" and (not isinstance(normalized["target"], int) or normalized["target"] <= 0):
+        raise ValueError("exact 模式必须提供正整数 target")
+    if mode == "minimum" and (not isinstance(normalized["minimum"], int) or normalized["minimum"] <= 0):
+        raise ValueError("minimum 模式必须提供正整数 minimum")
+    if mode == "range":
+        if not isinstance(normalized["minimum"], int) or not isinstance(normalized["maximum"], int):
+            raise ValueError("range 模式必须提供 minimum 和 maximum")
+        if normalized["minimum"] <= 0 or normalized["maximum"] < normalized["minimum"]:
+            raise ValueError("range 字数上下限无效")
+    return normalized
+
+
+def evaluate_word_count(actual: int, requirement: dict) -> dict:
+    """根据已确认要求返回 OK/SHORT/OVER。"""
+    req = validate_word_count_requirement(requirement)
+    mode = req["mode"]
+    if mode == "exact":
+        status = "OK" if actual >= req["target"] else "SHORT"
+        lower, upper = req["target"], None
+    elif mode == "minimum":
+        status = "OK" if actual >= req["minimum"] else "SHORT"
+        lower, upper = req["minimum"], None
+    else:
+        lower, upper = req["minimum"], req["maximum"]
+        status = "SHORT" if actual < lower else "OVER" if actual > upper else "OK"
+    return {
+        "status": status,
+        "minimum_required": lower,
+        "maximum_allowed": upper,
+        "short_by": max(0, lower - actual),
+        "over_by": max(0, actual - upper) if upper is not None else 0,
+        "needs_user_decision": status == "SHORT",
+    }
+
+
 # ---------------------------------------------------------------------------
 # 3. 图表标题检测（来自 gen_docx.py:836-851）
 # ---------------------------------------------------------------------------
 
-_CAPTION_NUM_PATTERN = re.compile(r'^[表图]\s*\d+\s+.+')
+_CAPTION_NUM_PATTERN = re.compile(r'^[表图]\s*(\d+)\s+.+')
 _CAPTION_REF_VERB_PATTERN = re.compile(
     r'^[表图]\s*\d+\s*'
     r'(报告|展示|说明|指出|呈现|反映|列出|给出|揭示了?|显示了?|直观展示了?)',
