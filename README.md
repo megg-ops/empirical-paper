@@ -2,14 +2,27 @@
 
 实证研究流程自动化 —— 面向经管类实证研究的 AI 辅助工作流。用户提供研究框架、参考文献与数据，工具自动完成数据审计、模型代码执行、结果表格生成和一致性验证，用户在关键节点确认后输出可审阅的论文草稿。
 
+当前版本：**v0.8.0**
+
+## v0.8.0 更新
+
+- **确定性数据审计**：新增 `audit_data.py`，对 CSV/XLSX 执行全量扫描；行列数、缺失、重复、唯一性、数值分布、约束和候选连接质量均由脚本计算，模型不能覆盖客观事实。
+- **受限语义映射**：模型只依据研究框架、数据字典或用户说明标注观测单位和变量角色；主分析表、关键变量或连接方式存在歧义时必须由用户确认并留痕。
+- **用户填写字数要求**：Stage 0 支持 `exact`、`minimum`、`range` 三种模式及自定义统计范围，不再使用隐式 8000 字默认值。
+- **结构化质量门禁**：`results.json` 是论文数字真源；一致性检查、DOCX 验证和最终质量门禁均输出 JSON，最终判定不再解析 Markdown 关键词。
+- **精简项目依赖**：仓库明确为 Claude skill/工作流，而非待发布的 Python 包；统一使用 `uv sync` 管理依赖。
+- **重建完整 Demo**：旧 V1 论文工作区已移除，新的 [V2 Demo 与复现说明](examples/README.md) 包含 Schema V2 数据审计、5082 字论文、Word 成品及最终 PASS 门禁。
+
+可直接查看 Demo 的 [数据审计报告](examples/paper_workspace/demo_digital_revenue_v2/01_audit/output/data_audit.md)、[字数报告](examples/paper_workspace/demo_digital_revenue_v2/04_writer/output/word_count_report.json)、[最终门禁 JSON](examples/paper_workspace/demo_digital_revenue_v2/final_paper/final_gate_report.json) 和 [Word 成品](examples/paper_workspace/demo_digital_revenue_v2/final_paper/paper_final.docx)。
+
 ## 架构概览
 
 ```mermaid
 graph LR
-    S0[Stage 0<br/>材料识别] --> S1[Stage 1<br/>数据审计]
-    S1 --> S2[Stage 2<br/>研究设计]
+    S0[Stage 0<br/>材料与字数要求] -->|用户确认| S1[Stage 1<br/>确定性审计 + 语义映射]
+    S1 -->|歧义时用户确认| S2[Stage 2<br/>研究设计]
     S2 -->|用户确认| S3[Stage 3<br/>代码执行]
-    S3 --> S4[Stage 4<br/>论文撰写]
+    S3 -->|用户确认结果| S4[Stage 4<br/>论文撰写]
     S4 -->|用户审阅| S5[Stage 5<br/>质量审查]
     S5 --> S6[Stage 6<br/>专家审稿<br/>可选]
 ```
@@ -19,7 +32,7 @@ graph LR
 | 0 | 主 Agent | 识别材料，确认字数规则，生成 manifest 和统一框架 | **Blocking Gate**：材料与字数要求确认 |
 | 1 | 数据审计 | 脚本计算客观事实，模型补充受限语义 | 关键语义有歧义时确认 |
 | 2 | 研究设计 | 模型选择、公式推导、变量定义 | **Blocking Gate**: 五项确认 |
-| 3 | 编程手 | 跑代码，生成表格和图 | 方法降级时暂停 |
+| 3 | 编程手 | 跑代码，生成表格、图和结构化结果 | **Blocking Gate**：代码与核心结果确认 |
 | 4 | 论文手 | 撰写全文，含政策搜索 | **Blocking Gate**: 审阅初稿，最多 2 轮修改 |
 | 5 | 审查手 | 6 维度质量审查 + 一致性验证 | 无 |
 | 6 | 独立审稿人 | 专家视角审稿 + AI 味评分（可选） | 无 |
@@ -28,7 +41,7 @@ graph LR
 
 **1. 人工卡点而非全自动**
 
-Stage 2 和 Stage 4 设置了 Blocking Gate，通过 `AskUserQuestion` 强制等待用户确认。实证研究涉及方法选择、变量定义等需要领域判断的决策，全自动容易产生不可逆错误。用户确认后写入 `user_confirmed.flag`，后续 Stage 会校验此文件。
+工作流在 Stage 0、Stage 2、Stage 3 和 Stage 4 设置固定确认点；Stage 1 在主分析表、观测单位、关键变量或连接方式存在歧义时触发条件确认。实证研究中的字数口径、语义映射、方法选择和结果解释都不能由模型静默决定。需要跨阶段确认时写入 `user_confirmed.flag` 或结构化解决记录，后续门禁会验证这些证据。
 
 **2. Markdown 中间格式 + pandoc 转换**
 
