@@ -1,6 +1,6 @@
 ---
 name: empirical-paper
-version: 0.7.0
+version: 0.8.0
 description: |
   自动撰写中文经管类实证结课论文。用户提供研究框架、数据文件、可选 LaTeX 模板和参考文献后，
   skill 自动完成材料识别、数据审计、模型选择、代码分析、表格生成、论文写作和最终整合。
@@ -292,7 +292,7 @@ Stage 6: 独立专家审稿（可选）→ expert_review_report.md
 在项目根目录和常见子目录中查找文件，按以下优先级匹配：
 
 1. **研究框架**：文件名包含 `框架` `提纲` `大纲` `要求` `framework` `outline` → 优先级最高
-2. **数据文件**：文件名包含 `数据` `样本` `data` `dataset` `sample` → 唯一 xlsx/csv
+2. **数据文件**：文件名包含 `数据` `样本` `data` `dataset` `sample` → 一个或多个 `.xlsx`/`.csv`
 3. **LaTeX 模板**：文件名包含 `模板` `template` `latex` → 唯一 `.tex` 文件
 4. **Word 模板**：文件名包含 `模板` `template` `word` → 唯一 `.docx` 文件
 5. **参考文献**：目录名包含 `references` `refs` `文献`
@@ -300,6 +300,14 @@ Stage 6: 独立专家审稿（可选）→ expert_review_report.md
 **如果存在多个候选文件**：必须询问用户，不得随意选择。
 
 **输出 manifest.json** 格式见 `references/handoff_schemas.md`。
+
+**字数要求必须由用户填写并确认**：
+
+- `exact`：明确目标值；
+- `minimum`：只规定最低值；
+- `range`：规定最小值和最大值。
+
+Stage 0 不得默认填入 8000 或任何其他目标。还需确认统计范围；默认建议口径为：计摘要、正文、结论、英文单词和数字，计图题/表题及解释性文字；不计标题、关键词、参考文献、致谢、附录、公式、代码和表格单元格。学校、模板或用户的明确口径优先。
 
 **格式转换：**
 
@@ -351,6 +359,7 @@ python scripts/extract_word_template_rules.py \
 2. **调用 `AskUserQuestion` 工具**，呈现以下内容：
    - 识别到的材料清单（按类型分组，标注文件名和数量）
    - 未识别到的材料类型（如有）
+   - 待填写/确认的字数模式、数值与统计范围
    - 询问用户："以上材料识别是否正确？是否有需要补充的材料？"
 3. 用户确认后，处理格式转换和模板选择
 4. 如果用户补充了材料，重新扫描并再次确认
@@ -375,7 +384,8 @@ python scripts/update_session_state.py \
 ```
 识别到的材料：
 - 研究框架（1 个）：研究框架.docx
-- 数据文件（1 个）：建模数据.xlsx
+- 数据文件（2 个）：建模数据.xlsx、地区信息.csv
+- 字数要求：range，5000–7000 字（用户确认）
 - LaTeX 模板（1 个）：论文模板.tex
 - 参考文献（3 个）：ref1.pdf, ref2.pdf, ref3.pdf
 
@@ -406,7 +416,7 @@ python scripts/update_session_state.py \
   - manifest 中记录的数据文件路径
 - 若缺失任一文件，先读取 `session_state.md`；仍无法确认则读取 `agents/audit_agent.md`；仍失败则停止。
 
-🚧 **GATE**: Stage 0 完成；manifest.json 存在
+🚧 **GATE**: Stage 0 完成；manifest.json 存在；`paper_requirements.word_count` 已由用户确认
 
 由 `agents/audit_agent.md` 执行。
 
@@ -415,15 +425,33 @@ python scripts/update_session_state.py \
 - 若当前会话不确定本 Stage 具体职责、输出格式或审查维度，必须读取 `agents/audit_agent.md`；
 - 禁止在未确认 Stage 职责时用通用逻辑替代 agent 指令。
 
-**必须检查：**
-1. 数据文件格式、sheet 名称、样本量、列名
-2. 是否存在年份、地区、公司、行业、个体 ID 等关键字段
-3. 缺失值比例
-4. 重复样本
-5. 数值变量的异常极值
-6. 框架中变量与数据列名是否能匹配
-7. 数据结构判断：截面数据、时间序列、面板数据
-8. 推荐可用模型
+**V2 执行原则：**
+
+1. 脚本全量读取 CSV/XLSX，确定性计算行列数、存储类型、缺失、唯一性、重复、分布、无穷值和已声明约束；不得用模型代替这些计算。
+2. 模型只根据 framework、数据字典或用户说明填写语义映射，不得改写脚本事实。
+3. 主分析表、观测单位、关键变量角色及关键连接方式不明确时，必须请用户确认。脚本只评估候选连接，不合并原始数据。
+4. 异常值仅标记 WARN/INFO，不得自动删除或缩尾。
+5. Stage 1 只报告方法所需字段条件，不推荐具体模型；模型选择完全属于 Stage 2。
+
+**标准命令：**
+
+```bash
+python scripts/audit_data.py profile \
+  --data <data.csv，可重复> \
+  --primary '<文件路径::Sheet，可选>' \
+  --output <workspace>/01_audit/output/variable_map.json \
+  --report <workspace>/01_audit/output/data_audit.md
+
+# 模型将受限语义标注写入 01_audit/work/semantic_annotations.json 后：
+python scripts/audit_data.py finalize \
+  --variable-map <workspace>/01_audit/output/variable_map.json \
+  --semantics <workspace>/01_audit/work/semantic_annotations.json \
+  --output <workspace>/01_audit/output/variable_map.json \
+  --report <workspace>/01_audit/output/data_audit.md
+
+python scripts/audit_data.py validate \
+  --variable-map <workspace>/01_audit/output/variable_map.json
+```
 
 **输出**：`data_audit.md` + `variable_map.json`（格式见 `references/handoff_schemas.md`）
 
@@ -440,7 +468,13 @@ python scripts/update_session_state.py \
   --format "<session_state 中记录的格式>"
 ```
 
-✅ **Checkpoint — 确认数据审计结果，进入 Stage 2。**
+**条件门禁：**
+
+- `PASS` / `WARN`：写入 checkpoint，可进入 Stage 2；WARN 必须原样传递。
+- `NEEDS_CONFIRMATION`：⛔ 向用户逐项确认，记录 `resolved_by=user` 与解释后重新 finalize。
+- `BLOCKER`：⛔ 修正数据、路径或语义配置后重跑；用户确认不能直接覆盖客观 BLOCKER。
+
+✅ **Checkpoint — variable_map.json 为 schema v2 且状态为 PASS/WARN，进入 Stage 2。**
 
 ---
 
@@ -458,7 +492,7 @@ python scripts/update_session_state.py \
   - `<workspace>/01_audit/output/variable_map.json`
 - 若缺失任一文件，停止并报告缺失项。
 
-🚧 **GATE**: Stage 1 完成；data_audit.md 和 variable_map.json 存在
+🚧 **GATE**: Stage 1 完成；data_audit.md 存在；variable_map.json 为 schema v2 且状态为 PASS/WARN
 
 由 `agents/modeler_agent.md` 执行。
 
@@ -689,7 +723,7 @@ python scripts/update_session_state.py \
 
 **程序化执行流程**：
 
-1. writer 完成初稿后，运行 `check_word_count.py` 统计字数。若低于目标字数，必须先询问用户（不得自动扩写），用户确认字数后再调用 `AskUserQuestion` 呈现论文给用户
+1. writer 完成初稿后，运行 `check_word_count.py --manifest <...>`，按 Stage 0 已确认的模式和 scope 统计。若状态为 SHORT，必须先询问用户（不得自动扩写），用户做出字数决策后再呈现论文审阅
 2. 用户确认满意 → 在 `<workspace>/04_writer/output/` 下写入 `user_confirmed.flag`
 3. 用户提出修改意见 → writer 按意见增量修改（只改需要改的段落，不重写整篇）→ 修改后重新调用 `AskUserQuestion` 确认
 4. 最多 2 轮修改循环
@@ -730,10 +764,10 @@ python scripts/update_session_state.py \
   - `<workspace>/03_coder/output/figures/`
   - `<workspace>/02_modeler/output/method_fit_check.md`
   - `<workspace>/02_modeler/output/model_plan.md`
-  - **字数门禁**：检查 `<workspace>/04_writer/output/word_count_report.json`。若 `status=SHORT` 且不存在 `<workspace>/04_writer/output/user_wordcount_decision.json`，必须停止，不得生成最终论文。若 `decision=expand`，必须回到 Stage 4 扩写；若 `decision=accept_short`，可继续。
+  - **字数门禁**：检查 schema v2 的 `<workspace>/04_writer/output/word_count_report.json`。若 `status=SHORT`，只有 `decision=accept_short` 且 `confirmed_by_user=true` 才可继续；`decision=expand` 必须回到 Stage 4。`OVER` 作为 WARN 留痕。
 - 若 draft 不存在，拒绝执行最终整合。若 method_fit_check.md 或 model_plan.md 缺失，方法复核无法执行，Stage 5 不得直接 PASS。
 
-🚧 **GATE**: Stage 4 完成；用户已确认初稿；存在与 output_format 对应的 draft 文件（latex: `paper_draft.tex`，docx: `paper_draft.md`）；字数门禁已通过（`word_count_report.json` 为 OK，或存在 `user_wordcount_decision.json`）
+🚧 **GATE**: Stage 4 完成；用户已确认初稿；存在与 output_format 对应的 draft 文件；字数门禁已通过（OK/OVER，或 SHORT + 用户确认 accept_short）
 
 **Step 1: 审查**（由 `agents/reviewer_agent.md` 执行）
 
@@ -837,14 +871,15 @@ Stage 5 结束前必须运行 `scripts/final_quality_gate.py`。
 ```bash
 python scripts/final_quality_gate.py \
   --workspace <workspace> \
-  --output <workspace>/final_paper/final_gate_report.md
+  --output <workspace>/final_paper/final_gate_report.md \
+  --json-output <workspace>/final_paper/final_gate_report.json
 ```
 
 若 `final_quality_gate.py` 返回 exit code 2，Stage 5 最终状态为 FAIL 或 INCOMPLETE，不得标记为 PASS。
 
-`quality_check.md` 的 Final Verdict 必须与 `final_gate_report.md` 一致。
+`quality_check.md` 的 Final Verdict 必须与 `final_gate_report.json` 一致。Markdown 报告只用于阅读，不作为机器真源。
 
-若二者冲突，以 `final_gate_report.md` 为准，并将冲突记录为 BLOCKER。
+若二者冲突，以 `final_gate_report.json` 为准，并将冲突记录为 BLOCKER。
 
 ✅ **Checkpoint — 输出最终论文。**
 
@@ -945,7 +980,7 @@ Word 输出与模板处理规则详见：
 | 类型 | 格式 | 说明 |
 |------|------|------|
 | 研究框架 | `.docx` `.md` `.pdf` | docx 用 python-docx，pdf 用 pypdf |
-| 建模数据 | `.xlsx` `.xls` `.csv` | 必须 |
+| 建模数据 | `.xlsx` `.csv` | 必须，可多个文件/Sheet |
 | LaTeX 模板 | `.tex` | 可选，缺失则生成默认模板 |
 | Word 模板 | `.docx` | 可选，与 LaTeX 模板二选一或同时提供（需用户确认） |
 | 参考文献 | PDF 文件或目录 | 可选 |

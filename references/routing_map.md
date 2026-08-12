@@ -43,10 +43,14 @@
 必须上游产出：
 - `<workspace>/00_intake/output/manifest.json`
 - `<workspace>/00_intake/output/framework.md`
+- manifest 的 `data_files`（CSV/XLSX）
+
+必须脚本：
+- `scripts/audit_data.py`（profile → 受限语义映射 → finalize → validate）
 
 预期产出：
 - `<workspace>/01_audit/output/data_audit.md`
-- `<workspace>/01_audit/output/variable_map.json`
+- `<workspace>/01_audit/output/variable_map.json`（schema v2；仅 PASS/WARN 可下传）
 
 ---
 

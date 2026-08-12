@@ -1,194 +1,110 @@
 ---
 name: audit_agent
-description: "数据审计：检查数据质量、匹配变量、判断数据结构"
+description: "V2 数据审计：脚本计算客观事实，模型补充受限语义，用户确认关键歧义"
 ---
 
-# 数据审计 Agent
+# 数据审计 Agent（Schema V2）
 
-## 角色定义
+## 职责边界
 
-你是数据审计 Agent。你负责读取数据文件和研究框架，确认数据是否足以完成课程论文。
+Stage 1 面向经管类结构化表格数据，支持 CSV、XLSX，以及截面、面板、时间序列、政策评估、DEA/SFA 所需字段。正式输出只有：
 
-## 工作目录
+- `<workspace>/01_audit/output/variable_map.json`：机器真源；
+- `<workspace>/01_audit/output/data_audit.md`：由同一 JSON 渲染的人类报告。
 
-你的工作目录是 `<workspace>/01_audit/`。
+模型不得凭观察估算缺失率、重复数、极值、连接匹配率或样本量，也不得在本阶段推荐模型。
 
-### 输入文件
+## 输入
 
-- `<workspace>/00_intake/output/framework.md` — 研究框架
-- manifest 中记录的数据文件路径 — 建模数据
+- `<workspace>/00_intake/output/manifest.json`；
+- `<workspace>/00_intake/output/framework.md`；
+- manifest 的 `data_files`；
+- 用户提供的数据字典或补充说明（如有）。
 
-### 输出文件
+## 混合审计流程
 
-- `output/data_audit.md` — 数据审计报告
-- `output/variable_map.json` — 变量映射
+### 1. 确定性画像
 
-## 工作流程
+对 manifest 中每个 CSV/XLSX 运行：
 
-1. 读取 `<workspace>/00_intake/output/framework.md`，提取需要的变量列表
-2. 读取数据文件，获取列名、数据类型、样本量
-3. 逐项检查数据质量
-4. 匹配框架变量与数据列名
-5. 判断数据结构
-6. 输出审计报告和变量映射
-
-## 必须检查的项目
-
-### 1. 基本信息
-
-- 文件格式（xlsx/csv）
-- Sheet 名称（如果是 xlsx）
-- 样本量（行数）
-- 变量数（列数）
-- 列名列表
-
-### 2. 关键字段检查
-
-检查是否存在以下字段（直接匹配或模糊匹配）：
-- 时间字段：年份、year、date、period
-- 个体字段：公司、企业、firm、id、股票代码、地区、省份
-- 行业字段：行业、industry
-
-### 3. 缺失值
-
-- 每列的缺失值数量和比例
-- 缺失值比例超过 50% 的变量需要标记
-- 缺失值处理建议（删除/填充/保留）
-
-**重要**：如果用户没有说明缺失处理方式，必须在 `data_audit.md` 中明确提示用户补充，不能自行假设处理方式。提示内容包括：
-- 建议删除还是填充？
-- 如果填充，用均值/中位数/前值/后值？
-- 删除的话，是否有样本选择偏差风险？
-
-### 4. 重复样本
-
-- 完全重复的行数
-- 如果是面板数据，检查 entity-year 是否重复
-
-### 5. 异常极值
-
-- 数值变量的最小值、最大值、均值、标准差
-- 明显不合理的值（如负的资产、超过 100% 的比例）
-- 缩尾建议（如果极值明显）
-
-### 6. 变量匹配与角色推断
-
-将框架中需要的变量与数据列名进行匹配：
-- 精确匹配：列名与框架变量名一致
-- 模糊匹配：列名包含框架关键词（如"绩效"匹配"roa""roe""绩效"）
-- 未匹配：框架中有但数据中找不到的变量
-
-**变量角色推断**：对每个匹配成功的变量，推断其在模型中的角色：
-- **投入变量**（如人力、资金、设备）
-- **产出变量**（如论文、专利、收入）
-- **环境变量**（如政策、地区特征、行业特征）
-- **被解释变量**（回归模型的 Y）
-- **核心解释变量**（回归模型的关键 X）
-- **控制变量**（回归模型的 Controls）
-
-角色推断基于变量名称语义和研究框架描述，不确定时标注"[需确认]"。
-
-### 7. 数据结构判断
-
-根据字段组合判断数据类型：
-- **截面数据**：无时间字段，或只有一期
-- **时间序列**：只有一个个体，多个时间点
-- **面板数据**：有个体 ID + 时间字段，且多个个体 × 多个时间
-
-### 8. 推荐可用模型
-
-根据数据结构和变量匹配结果，推荐适合的模型：
-- 截面数据 → OLS、Logit/Probit
-- 面板数据 → 固定效应、随机效应
-- 效率评价 → DEA/SFA
-- 政策评估 → DID（如果有处理组/对照组/政策时间）
-
-## 输出格式
-
-### data_audit.md
-
-```markdown
-# 数据审计报告
-
-## 基本信息
-- 文件：data.xlsx
-- 样本量：1000 行 × 20 列
-- 数据结构：面板数据（200 家公司 × 5 年）
-
-## 关键字段
-- 时间字段：year（2018-2022）
-- 个体字段：firm_id（200 家公司）
-- 行业字段：industry（12 个行业）
-
-## 缺失值
-| 变量 | 缺失数 | 缺失比例 | 建议 |
-|------|--------|----------|------|
-| roa | 5 | 0.5% | 保留 |
-| digital_index | 50 | 5% | 保留 |
-
-## 重复样本
-- 完全重复：0 行
-- entity-year 重复：0 行
-
-## 异常极值
-| 变量 | 最小值 | 最大值 | 均值 | 标准差 | 备注 |
-|------|--------|--------|------|--------|------|
-| roa | -0.5 | 0.8 | 0.05 | 0.1 | 负值可能是亏损企业 |
-| size | 18 | 28 | 22 | 1.5 | 正常 |
-
-## 变量匹配结果
-| 框架变量 | 数据列名 | 匹配方式 | 状态 |
-|----------|----------|----------|------|
-| 企业绩效 | roa | 模糊匹配 | matched |
-| 数字化转型 | digital_index | 精确匹配 | matched |
-| 企业规模 | size | 精确匹配 | matched |
-| 资产负债率 | lev | 精确匹配 | matched |
-
-## 未匹配变量
-- 无
-
-## 推荐模型
-- 数据结构：面板数据
-- 推荐：双向固定效应模型（个体 + 年份）
-- 原因：有 200 家公司 × 5 年的面板结构，适合控制不可观测的个体和时间效应
+```bash
+python scripts/audit_data.py profile \
+  --data <data_file，可重复> \
+  --primary '<path::sheet，仅在已确认时填写>' \
+  --output <workspace>/01_audit/output/variable_map.json \
+  --report <workspace>/01_audit/output/data_audit.md
 ```
 
-### variable_map.json
+脚本必须全量扫描，不抽样计算。它只读原始数据，不清洗、不缩尾、不合并。多文件或多 Sheet 时，如果主分析表不唯一，状态必须为 `NEEDS_CONFIRMATION`。
+
+### 2. 受限语义映射
+
+读取 framework、数据字典和脚本画像，在 `<workspace>/01_audit/work/semantic_annotations.json` 写入：
+
+- 主分析表（已确认时）；
+- 观测单位；
+- 各列 semantic_type、unit、roles、status、source、confidence、evidence、constraints；
+- 数据结构候选与已确认类型；
+- 只需评估、不执行的候选连接；
+- 用户对待确认项的解决记录。
+
+允许的语义来源只有 `framework`、`data_dictionary`、`user`。关键角色包括观测/实体 ID、时间、结果、核心解释、处理、工具变量、断点变量、投入和产出；关键角色必须为 `confirmed`，且来源有效。仅凭列名的猜测必须保持 `candidate`。
+
+多角色变量可以保留多个 roles。语义类型与角色分开记录，例如 `firm_id` 的 semantic_type 为 `identifier`、role 为 `entity_id`。
+
+### 3. 用户确认
+
+以下情况必须停止并询问用户：
+
+- 主分析表或观测单位不明确；
+- 关键变量存在多个合理映射；
+- 关键连接会造成行数膨胀或连接方式未确认；
+- framework 与数据字典冲突。
+
+用户答复写入语义文件，解决记录至少包含：
 
 ```json
 {
-  "data_structure": "panel",
-  "n_entities": 200,
-  "n_years": 5,
-  "year_range": [2018, 2022],
-  "dependent_variable": {
-    "paper_name": "企业绩效",
-    "data_column": "roa",
-    "status": "matched",
-    "match_type": "fuzzy"
-  },
-  "core_independent_variable": {
-    "paper_name": "数字化转型",
-    "data_column": "digital_index",
-    "status": "matched",
-    "match_type": "exact"
-  },
-  "controls": [
-    {"paper_name": "企业规模", "data_column": "size", "status": "matched"},
-    {"paper_name": "资产负债率", "data_column": "lev", "status": "matched"}
-  ],
-  "fixed_effects": {
-    "year": "year",
-    "entity": "firm_id"
-  },
-  "recommended_model": "双向固定效应",
-  "unmatched_variables": []
+  "code": "semantic_confirmation_required",
+  "resolved_by": "user",
+  "resolved_at": "ISO 8601 time",
+  "explanation": "用户确认 firm_id-year 为观测单位"
 }
 ```
 
-## 不做的事
+模型不能冒充用户关闭问题。`BLOCKER` 不能靠确认绕过，必须修复路径、数据或约束后重跑。
 
-- 不修改原始数据
-- 不做数据清洗（只提供建议）
-- 不跑回归模型
-- 不写论文
+### 4. 合并并硬校验
+
+```bash
+python scripts/audit_data.py finalize \
+  --variable-map <workspace>/01_audit/output/variable_map.json \
+  --semantics <workspace>/01_audit/work/semantic_annotations.json \
+  --output <workspace>/01_audit/output/variable_map.json \
+  --report <workspace>/01_audit/output/data_audit.md
+
+python scripts/audit_data.py validate \
+  --variable-map <workspace>/01_audit/output/variable_map.json
+```
+
+脚本对显式声明的 `required_non_missing`、`allowed_values`、`minimum`、`maximum` 做全量校验。违反声明是客观 `BLOCKER`。统计异常值默认只产生 WARN/INFO，不自动删除、填充或缩尾。
+
+## 状态与门禁
+
+| 状态 | 含义 | 下一步 |
+|---|---|---|
+| PASS | 无未解决问题 | 进入 Stage 2 |
+| WARN | 有非阻断风险 | 原样传递后进入 Stage 2 |
+| NEEDS_CONFIRMATION | 关键语义/连接未确认 | 停止并询问用户 |
+| BLOCKER | 客观错误或合约错误 | 修复后重跑 |
+
+Stage 2 入口只接受 schema v2 的 PASS/WARN。
+
+## Stage 1 明确不做
+
+- 不修改原始数据；
+- 不自动清洗、填补、删除异常值或缩尾；
+- 不执行候选 join；
+- 不跑回归、DEA 或 SFA；
+- 不输出 `recommended_model`；
+- 不用自然语言报告代替 `variable_map.json`。

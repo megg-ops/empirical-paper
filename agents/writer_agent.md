@@ -141,7 +141,7 @@ description: "撰写结课论文，统一语言风格"
 13. **根据输出格式组装论文**：
     - **LaTeX 输出**：组装为完整 .tex 文件，写入 `output/paper_draft.tex`（组装时对照 `references/latex_formatting.md` 检查清单逐项验证）
     - **Word 输出**：先写为 `output/paper_draft.md`（公式用 LaTeX 语法包裹在 `$...$` 或 `$$...$$` 中，表格和图片使用 `[TABLE:]/[FIGURE:]` 占位符）。**不生成 .docx，由 Stage 5 的 `scripts/gen_docx.py` 统一生成**
-14. 字数统计：运行 `check_word_count.py` 统计字数，若低于目标则暂停询问用户（不得自动扩写）
+14. 字数统计：运行 `check_word_count.py`，按 manifest 中 Stage 0 已确认的模式和范围统计；SHORT 时暂停询问用户（不得自动扩写）
 15. 生成引用清单和写作检查清单
 
 ## 写作顺序
@@ -166,17 +166,17 @@ description: "撰写结课论文，统一语言风格"
 
 ## 字数控制
 
-目标总字数：8000-9000 字（不含参考文献和 LaTeX 命令）
+目标不是固定值，必须读取 `manifest.json.paper_requirements.word_count`。根据用户确认的 exact/minimum/range 分配章节；下表只提供比例建议，不替代用户要求。
 
-| 章节 | 字数占比 | 约数字数 |
-|------|---------|---------|
-| 摘要 | 3-4% | 250-350 |
-| 引言 | 10-12% | 800-1000 |
-| 文献综述 | 12-15% | 1000-1200 |
-| 研究设计 | 15-18% | 1200-1500 |
-| 实证分析 | 30-35% | 2500-3000 |
-| 结论 | 8-10% | 700-800 |
-| 数据与变量 | 10-12% | 800-1000 |
+| 章节 | 建议占比 |
+|------|---------|
+| 摘要 | 3-4% |
+| 引言 | 10-12% |
+| 文献综述 | 12-15% |
+| 研究设计 | 15-18% |
+| 实证分析 | 30-35% |
+| 结论 | 8-10% |
+| 数据与变量 | 10-12% |
 
 **注意**：实证分析是字数最多的章节，不能过于简略。
 
@@ -604,7 +604,7 @@ $$
 - [x] 参考文献
 
 ## 七、字数
-- 目标：8000-9000
+- 要求：从 manifest.paper_requirements.word_count 填写
 - 实际：（填写）
 - 差距：（填写）
 
@@ -635,7 +635,7 @@ $$
 ```bash
 python scripts/check_word_count.py \
   --paper <workspace>/04_writer/output/paper_draft.md \
-  --target 8000 \
+  --manifest <workspace>/00_intake/output/manifest.json \
   --output <workspace>/04_writer/output/word_count_report.json
 ```
 
@@ -643,17 +643,16 @@ python scripts/check_word_count.py \
 
 **若 status=SHORT**：**不得自动扩写**，必须调用 `AskUserQuestion` 询问用户：
 
-> 当前论文正文约 XXXX 字，低于目标 YYYY 字。是否需要扩写？
+> 当前论文按已确认口径统计为 XXXX 字，低于要求下限 YYYY 字。是否需要扩写？
 >
 > 1. 接受当前版本，不扩写；
-> 2. 扩写到 7000 字以上；
-> 3. 扩写到 8000 字以上；
-> 4. 自定义最小字数。
+> 2. 扩写到原要求下限；
+> 3. 填写新的最小字数。
 
 用户选择后写入 `<workspace>/04_writer/output/user_wordcount_decision.json`：
 
-- 选择 1（接受）：`{"actual_words": XXXX, "decision": "accept_short", "target_words": YYYY, "confirmed_by_user": true}`
-- 选择 2/3/4（扩写）：`{"actual_words": XXXX, "decision": "expand", "target_words": <用户指定>, "confirmed_by_user": true}`
+- 选择 1（接受）：`{"actual_words": XXXX, "decision": "accept_short", "minimum_required": YYYY, "confirmed_by_user": true}`
+- 选择 2/3（扩写）：`{"actual_words": XXXX, "decision": "expand", "target_words": <用户指定>, "confirmed_by_user": true}`
 
 **若用户选择 expand**：writer 按用户指定的目标字数扩写，扩写后重新运行 `check_word_count.py`，再次触发 BLOCKING。
 

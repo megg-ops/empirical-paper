@@ -16,8 +16,8 @@ graph LR
 
 | Stage | Agent | 职责 | 人工介入 |
 |-------|-------|------|----------|
-| 0 | 主 Agent | 识别材料，生成 manifest 和统一框架 | 无 |
-| 1 | 数据审计 | 数据质量检查，变量映射 | 无 |
+| 0 | 主 Agent | 识别材料，确认字数规则，生成 manifest 和统一框架 | **Blocking Gate**：材料与字数要求确认 |
+| 1 | 数据审计 | 脚本计算客观事实，模型补充受限语义 | 关键语义有歧义时确认 |
 | 2 | 研究设计 | 模型选择、公式推导、变量定义 | **Blocking Gate**: 五项确认 |
 | 3 | 编程手 | 跑代码，生成表格和图 | 方法降级时暂停 |
 | 4 | 论文手 | 撰写全文，含政策搜索 | **Blocking Gate**: 审阅初稿，最多 2 轮修改 |
@@ -36,7 +36,7 @@ Stage 2 和 Stage 4 设置了 Blocking Gate，通过 `AskUserQuestion` 强制等
 
 **3. 程序化反幻觉验证**
 
-不信任 LLM 自查。`verify_consistency.py` 和 `validate_docx.py` 两个脚本独立验证：论文中的数字是否与代码输出一致、引用编号是否完整、图表是否全部嵌入、公式是否被破坏。验证发现 BLOCKER 级问题时，最终论文不得标记为通过。
+不信任 LLM 自查。Stage 1 用 `audit_data.py` 全量计算数据事实；Stage 5 用 `verify_consistency.py` 和 `validate_docx.py` 独立验证数字、引用、图表和公式。模型负责语义判断与写作，但不能覆盖脚本事实。最终门禁只读取结构化 JSON，发现 BLOCKER 时不得通过。
 
 **4. 会话状态驱动的断点续接**
 
@@ -55,13 +55,9 @@ mkdir -p .claude/skills
 git clone https://github.com/megg-ops/empirical-paper.git .claude/skills/empirical-paper
 ```
 
-安装 Python 依赖：
+这是 Claude skill/工作流仓库，不构建 Python 安装包。使用 uv 同步脚本依赖：
 
 ```bash
-# pip
-pip install -r .claude/skills/empirical-paper/scripts/requirements.txt
-
-# uv
 cd .claude/skills/empirical-paper && uv sync
 ```
 
@@ -87,7 +83,7 @@ pandoc --version
 
 在 Claude Code 对话中输入 `/empirical-paper`，根据当前路径下文件，启动实证论文自动化撰写工作流，输出 docx 格式文件，或直接在对话中问 `/empirical-paper` 这个 skill 怎么用。
 
-工具会自动完成 7 个 Stage，在 Stage 2 和 Stage 4 暂停等你确认，最终输出到 `paper_workspace/final_paper/`。
+工具会按顺序完成各 Stage，并在材料/字数、关键数据语义、研究设计、代码结果和论文初稿等必要节点等待确认。最终输出到 `paper_workspace/<run_id>/final_paper/`。
 
 ### 推荐文件命名
 
@@ -106,7 +102,7 @@ references/ / refs/ / 文献/
 | 内容 | 说明 |
 |------|------|
 | 论文标题 | 一句话 |
-| 目标字数 | 总字数 |
+| 字数要求 | exact、minimum 或 range；需确认统计范围 |
 | 章节安排 | 每章标题、字数、子节 |
 | 子节写作指引 | 每个子节写什么 |
 | 公式标记 | 哪些子节需要公式推导（写"公式""推导""模型"等关键词） |
@@ -119,7 +115,7 @@ references/ / refs/ / 文献/
 ```markdown
 # 数字化转型对企业绩效的影响研究——基于A股上市公司面板数据
 
-目标字数：8000字
+字数要求：5000-7000 字（range）
 
 ## 摘要（300字）
 包含：研究问题、方法、主要发现、政策含义
@@ -152,7 +148,7 @@ references/ / refs/ / 文献/
 
 ## 模型选择规则
 
-根据数据结构自动选择：
+Stage 1 不推荐模型，只给出字段条件。Stage 2 综合研究目标、数据结构、因变量类型和识别条件后选择：
 
 | 数据情况 | 推荐模型 |
 |----------|----------|
@@ -181,10 +177,10 @@ references/ / refs/ / 文献/
 skill 会生成默认模板（ctexart 文档类，A4 纸，标准页边距）。
 
 **Q: 没有参考文献怎么办？**
-论文手会尝试搜索补充，但建议至少提供几篇核心文献。补充的文献会标记为"待确认"。
+论文手可以搜索补充，但建议至少提供几篇核心文献。只有经 DOI、出版方或机构官方页面核验的来源才能进入最终论文；无法核验的条目会被排除并报告。
 
 **Q: 数据审计发现变量不匹配怎么办？**
-skill 会列出未匹配的变量，询问你是否继续。
+skill 会区分客观 BLOCKER 与语义 NEEDS_CONFIRMATION。前者需要修正数据/配置，后者由你确认映射后留痕继续。
 
 **Q: 编程手跑的代码报错了怎么办？**
 skill 会自动分析错误并重试一次。你也可以手动检查 `paper_workspace/03_coder/output/analysis.py`。
@@ -232,11 +228,14 @@ empirical-paper/
 ├── scripts/
 │   ├── utils.py                       # 共享工具函数
 │   ├── docx_gen/                      # Word 生成模块（styles/tables/assets/formulas/output）
-│   ├── tests/                         # 单元测试（24 tests）
+│   ├── tests/                         # 单元测试
+│   ├── audit_data.py                  # V2 全量确定性数据审计
 │   ├── gen_docx.py                    # Markdown → Word 入口
 │   ├── validate_docx.py               # Word 验证
 │   ├── verify_consistency.py          # 一致性验证
 │   ├── check_word_count.py            # 字数统计
+│   ├── quality_contract.py            # 结构化质量结果合约
+│   ├── final_quality_gate.py           # JSON 最终聚合门禁
 │   └── ...                            # 其他脚本
 └── references/                        # 规范文档（写作、引用、格式、审查等）
 ```

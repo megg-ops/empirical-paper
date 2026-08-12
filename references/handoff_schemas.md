@@ -15,18 +15,41 @@
   "project_title": "string — 项目/论文标题",
   "created_at": "string — ISO 8601 创建时间",
   "framework_file": "string — 研究框架文件路径",
-  "data_file": "string — 数据文件路径",
+  "data_files": ["string — CSV/XLSX 数据文件路径，可多个"],
   "template_file": "string | null — LaTeX 模板路径",
   "word_template_file": "string | null — Word 模板路径",
   "output_format": "string — latex | docx（当两种模板都存在时由用户确认）",
   "references_dir": "string | null — 参考文献目录路径",
+  "paper_requirements": {
+    "word_count": {
+      "mode": "exact | minimum | range",
+      "target": "integer | null",
+      "minimum": "integer | null",
+      "maximum": "integer | null",
+      "source": "user | school | template",
+      "confirmed_by_user": true,
+      "scope": {
+        "include_abstract": true,
+        "include_title": false,
+        "include_keywords": false,
+        "include_references": false,
+        "include_acknowledgements": false,
+        "include_appendices": false,
+        "include_table_cells": false,
+        "include_table_captions": true,
+        "include_figure_captions": true,
+        "include_formulas": false,
+        "include_code_blocks": false
+      }
+    }
+  },
   "selection_notes": {
     "字段名": "string — 选择该文件的理由"
   }
 }
 ```
 
-**必填字段**：run_id, workspace_root, project_title, created_at, framework_file, data_file, output_format
+**必填字段**：run_id, workspace_root, project_title, created_at, framework_file, data_files, output_format, paper_requirements.word_count
 **可选字段**：template_file, word_template_file, references_dir, selection_notes
 
 **新增字段**（pandoc 依赖检测）：
@@ -49,56 +72,62 @@
 
 ## Stage 1 → Stage 2
 
-### data_audit.md
-
-必须包含以下章节：
-
-1. **基本信息**：文件格式、样本量、变量数
-2. **关键字段**：时间字段、个体字段、行业字段
-3. **缺失值**：每列缺失数和比例
-4. **重复样本**：完全重复数、entity-year 重复数
-5. **异常极值**：各变量 min/max/mean/std
-6. **变量匹配结果**：框架变量 vs 数据列名的匹配表
-7. **推荐模型**：数据结构判断 + 推荐模型
-
-### variable_map.json
+### variable_map.json（Schema V2，机器真源）
 
 ```json
 {
-  "data_structure": "string — cross_section | time_series | panel",
-  "n_entities": "number | null",
-  "n_years": "number | null",
-  "year_range": "[start, end] | null",
-  "dependent_variable": {
-    "paper_name": "string",
-    "data_column": "string",
-    "status": "matched | unmatched",
-    "match_type": "exact | fuzzy"
-  },
-  "core_independent_variable": {
-    "paper_name": "string",
-    "data_column": "string",
-    "status": "matched | unmatched",
-    "match_type": "exact | fuzzy"
-  },
-  "controls": [
-    {
-      "paper_name": "string",
-      "data_column": "string",
-      "status": "matched | unmatched",
-      "match_type": "exact | fuzzy"
-    }
-  ],
-  "fixed_effects": {
-    "year": "string | null",
-    "entity": "string | null"
-  },
-  "recommended_model": "string",
-  "unmatched_variables": ["string"]
+  "schema_version": 2,
+  "kind": "variable_map",
+  "status": "PASS | WARN | NEEDS_CONFIRMATION | BLOCKER",
+  "audit_scope": {"formats": ["csv", "xlsx"], "scan": "full", "raw_data_modified": false},
+  "primary_table": "path::sheet",
+  "tables": [{
+    "source_path": "string",
+    "sheet": "string | null",
+    "row_count": 0,
+    "column_count": 0,
+    "duplicate_row_count": 0,
+    "unique_key_candidates": [],
+    "variables": [{
+      "column": "string",
+      "storage_type": "integer | float | boolean | datetime | string",
+      "observed_pattern": {
+        "row_count": 0, "missing_count": 0, "missing_rate": 0,
+        "unique_count": 0, "sample_values": [], "numeric_summary": {}
+      },
+      "semantic_mapping": {
+        "semantic_type": "continuous | binary | ordinal | nominal | count | proportion | date | datetime | identifier | text | unknown",
+        "unit": "string | null",
+        "roles": ["entity_id | time | outcome | predictor | control | treatment | instrument | running_variable | fixed_effect | cluster | weight | group | input | output | environment | auxiliary"],
+        "status": "unmapped | candidate | confirmed",
+        "source": "framework | data_dictionary | user | null",
+        "confidence": "low | medium | high | null",
+        "evidence": [],
+        "constraints": {"required_non_missing": false, "allowed_values": [], "minimum": null, "maximum": null}
+      }
+    }]
+  }],
+  "observation_unit": {"label": "string", "status": "confirmed", "source": "user", "evidence": []},
+  "join_assessments": [],
+  "structure_assessment": {"candidates": [], "confirmed_type": "cross_section | panel | time_series | policy_evaluation | dea | sfa | null"},
+  "method_capabilities": {},
+  "issues": [{
+    "code": "string",
+    "severity": "INFO | WARN | NEEDS_CONFIRMATION | BLOCKER",
+    "message": "string",
+    "evidence": {},
+    "resolution": {"resolved_by": "user", "resolved_at": "ISO 8601", "explanation": "string"}
+  }]
 }
 ```
 
-**必填字段**：data_structure, dependent_variable, core_independent_variable, recommended_model
+`observed_pattern` 和 join 指标只能由 `audit_data.py` 生成。语义映射只能追加到脚本骨架，不得覆盖客观画像。正式 V2 合约不包含 `recommended_model`。
+
+### data_audit.md（展示层）
+
+必须由同一个 variable_map.json 渲染，包含数据表、主分析表、观测单位、变量画像/角色、数据问题、用户解决记录和方法字段条件；不得另行维护与 JSON 冲突的数字或模型推荐。
+
+**门控规则**：只有 schema v2 且 status 为 PASS/WARN 才可进入 Stage 2。
 
 ---
 
